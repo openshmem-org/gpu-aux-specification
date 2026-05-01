@@ -1438,6 +1438,7 @@ None.
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The \FUNC{shmemg\_my\_pe} routine returns the \ac{PE} number of the calling
 \ac{PE}. The value is an integer between 0 and \texttt{npes - 1}, where
 \texttt{npes} is the total number of \acp{PE} in the program. The returned value
@@ -1469,6 +1470,7 @@ None.
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The \FUNC{shmemg\_n\_pes} routine returns the total number of \acp{PE} in the
 \openshmem program. The returned value is identical to the value returned by
 \FUNC{shmem\_n\_pes} on the host.
@@ -1598,6 +1600,7 @@ with \VAR{ctx}, or \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} otherwise.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The routines return after the data has been copied out of the \VAR{source} array
 on the local \ac{PE}. Delivery of data into the \VAR{dest} data object on the
 destination \ac{PE} may occur in any order. Two successive put routines may
@@ -1650,6 +1653,7 @@ copied. Shall reside in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The routines return after initiating the operation. The operation is considered
 complete after a subsequent call to \FUNC{shmemg\_quiet}. At the completion of
 \FUNC{shmemg\_quiet}, the data has been copied into the \VAR{dest} array on the
@@ -1700,6 +1704,7 @@ reside in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The routines copy a contiguous symmetric data object from \ac{PE} \VAR{pe} to the
 local \VAR{dest} data object. The routines return after the data has been
 delivered to the \VAR{dest} array on the local \ac{PE}.
@@ -1750,6 +1755,7 @@ reside in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The routines initiate a copy of a contiguous symmetric data object from \ac{PE}
 \VAR{pe} to the local \VAR{dest} data object. The routines return after
 initiating the operation. The operation is considered complete after a subsequent
@@ -1825,6 +1831,7 @@ remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The non-fetching \ac{AMO} routines perform an atomic update to the data object at
 address \VAR{dest} on \ac{PE} \VAR{pe}. The operations are:
 
@@ -1916,6 +1923,7 @@ only by \FUNC{shmemg\_atomic\_compare\_swap}.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The fetching \ac{AMO} routines perform an atomic read or update to the data
 object at address \VAR{dest} on \ac{PE} \VAR{pe} and return the prior value. The
 operations are:
@@ -2017,6 +2025,7 @@ only by \FUNC{shmemg\_atomic\_compare\_swap\_nbi}.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The nonblocking fetching \ac{AMO} routines initiate an atomic fetch or update to
 the data object at address \VAR{dest} on \ac{PE} \VAR{pe}. The routines return
 after initiating the operation. The \VAR{fetch} data object shall not be accessed
@@ -2097,6 +2106,7 @@ remote PE.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The routines copy data from \VAR{source} to \VAR{dest} on \ac{PE} \VAR{pe} and
 subsequently update the signal data object at \VAR{sig\_addr}. The routines
 return after the data has been copied out of \VAR{source}. Completion of the
@@ -2169,6 +2179,7 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 The routines initiate a copy and signal update. The routines return after
 initiating the operation. The operation is considered complete after a subsequent
 call to \FUNC{shmemg\_quiet}. The \VAR{dest}, \VAR{source}, and \VAR{sig\_addr}
@@ -2196,6 +2207,7 @@ variable. Shall reside in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_signal\_fetch} returns the value of the signal data object at
 address \VAR{sig\_addr} on the calling \ac{PE}. Access to \VAR{sig\_addr}
 satisfies the atomicity guarantees described in the signaling operations
@@ -2238,6 +2250,7 @@ in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_wait\_until} blocks until the value of \VAR{ivar} at the calling
 \ac{PE} satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The
 supported values of \VAR{cmp} are: \CONST{SHMEM\_CMP\_EQ},
@@ -2274,6 +2287,7 @@ in the \ac{GPU} symmetric heap.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_test} tests whether the value of \VAR{ivar} at the calling \ac{PE}
 satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The test is
 performed once and returns without blocking.
@@ -2303,6 +2317,7 @@ compared.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_signal\_wait\_until} blocks until the value of the signal data
 object at \VAR{sig\_addr} satisfies the condition implied by \VAR{cmp} and
 \VAR{cmp\_value}. The routine shall not return until the condition is satisfied.
@@ -2340,6 +2355,7 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_fence} ensures ordering of delivery of put, \ac{AMO}, and
 put-with-signal operations to symmetric data objects. All such operations issued
 to a particular remote \ac{PE} on the given context prior to the call to
@@ -2382,6 +2398,7 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_quiet} ensures completion of all outstanding put, \ac{AMO}, and
 put-with-signal operations to symmetric data objects issued by the calling
 \ac{GPU} thread on the given context. All such operations are guaranteed to be
@@ -2441,6 +2458,7 @@ None.
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_sync\_all} is a collective synchronization routine over
 \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. The routine blocks until all \acp{PE} in
 \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have called \FUNC{shmemg\_sync\_all}.
@@ -2485,6 +2503,7 @@ __device__ int shmemg_team_sync_htg(shmem_team_t team);
 \end{apiarguments}
 
 \apidescription{
+Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_team\_sync} is a collective synchronization routine over an
 existing \openshmem team. The routine blocks until all \acp{PE} in the specified
 team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team shall
@@ -2773,6 +2792,170 @@ by these implementations.
 \end{itemize}
 
 \clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Index entries
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Library Constants
+\index{SHMEM\_DEVICE\_HOST\_INIT}
+\index{SHMEM\_DEVICE\_KERNEL\_INIT}
+\index{SHMEM\_DEVICE\_CTX}
+\index{SHMEM\_DEVICE\_CTX\_DEFAULT}
+\index{SHMEM\_DEVICE\_TEAM\_WORLD}
+\index{SHMEM\_DEVICE\_TEAM\_SHARED}
+\index{SHMEM\_CMP\_EQ}
+\index{SHMEM\_CMP\_NE}
+\index{SHMEM\_CMP\_GT}
+\index{SHMEM\_CMP\_GE}
+\index{SHMEM\_CMP\_LT}
+\index{SHMEM\_CMP\_LE}
+
+% Environment Variables
+\index{SHMEM\_DEVICE\_SYMMETRIC\_SIZE}
+
+% Types
+\index{shmem\_ctx\_t}
+\index{shmem\_team\_t}
+
+% Host-side Functions (Initialization and Memory Management)
+\index{shmem\_init\_thread}
+\index{shmem\_team\_create\_ctx}
+\index{shmemg\_malloc}
+\index{shmemg\_calloc}
+\index{shmemg\_align}
+\index{shmemg\_free}
+
+% Host-side Functions (GPU-Aware Extensions)
+\index{shmem\_fence}
+\index{shmem\_ctx\_fence}
+\index{shmem\_quiet}
+\index{shmem\_ctx\_quiet}
+\index{shmem\_put\_signal}
+\index{shmem\_barrier\_all}
+\index{shmem\_barrier}
+
+% GPU-Centric Query Routines
+\index{shmemg\_my\_pe}
+\index{shmemg\_n\_pes}
+
+% GPU-Centric RMA -- Blocking Put
+\index{shmemg\_putmem}
+\index{shmemg\_ctx\_putmem}
+\index{shmemg\_putmem\_tg}
+\index{shmemg\_ctx\_putmem\_tg}
+\index{shmemg\_putmem\_htg}
+\index{shmemg\_ctx\_putmem\_htg}
+
+% GPU-Centric RMA -- Nonblocking Put
+\index{shmemg\_putmem\_nbi}
+\index{shmemg\_ctx\_putmem\_nbi}
+\index{shmemg\_putmem\_nbi\_tg}
+\index{shmemg\_ctx\_putmem\_nbi\_tg}
+\index{shmemg\_putmem\_nbi\_htg}
+\index{shmemg\_ctx\_putmem\_nbi\_htg}
+
+% GPU-Centric RMA -- Blocking Get
+\index{shmemg\_getmem}
+\index{shmemg\_ctx\_getmem}
+\index{shmemg\_getmem\_tg}
+\index{shmemg\_ctx\_getmem\_tg}
+\index{shmemg\_getmem\_htg}
+\index{shmemg\_ctx\_getmem\_htg}
+
+% GPU-Centric RMA -- Nonblocking Get
+\index{shmemg\_getmem\_nbi}
+\index{shmemg\_ctx\_getmem\_nbi}
+\index{shmemg\_getmem\_nbi\_tg}
+\index{shmemg\_ctx\_getmem\_nbi\_tg}
+\index{shmemg\_getmem\_nbi\_htg}
+\index{shmemg\_ctx\_getmem\_nbi\_htg}
+
+% GPU-Centric AMO -- Non-fetching
+\index{shmemg\_TYPENAME\_atomic\_set}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_set}
+\index{shmemg\_TYPENAME\_atomic\_inc}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_inc}
+\index{shmemg\_TYPENAME\_atomic\_add}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_add}
+\index{shmemg\_TYPENAME\_atomic\_and}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_and}
+\index{shmemg\_TYPENAME\_atomic\_or}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_or}
+\index{shmemg\_TYPENAME\_atomic\_xor}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_xor}
+
+% GPU-Centric AMO -- Fetching
+\index{shmemg\_TYPENAME\_atomic\_fetch}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch}
+\index{shmemg\_TYPENAME\_atomic\_swap}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_swap}
+\index{shmemg\_TYPENAME\_atomic\_compare\_swap}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_compare\_swap}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_inc}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_inc}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_add}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_add}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_and}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_and}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_or}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_or}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_xor}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_xor}
+
+% GPU-Centric AMO -- Nonblocking Fetching
+\index{shmemg\_TYPENAME\_atomic\_fetch\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_swap\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_swap\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_compare\_swap\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_compare\_swap\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_inc\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_inc\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_add\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_add\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_and\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_and\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_or\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_or\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_xor\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_xor\_nbi}
+
+% GPU-Centric Signaling
+\index{shmemg\_putmem\_signal}
+\index{shmemg\_ctx\_putmem\_signal}
+\index{shmemg\_putmem\_signal\_tg}
+\index{shmemg\_ctx\_putmem\_signal\_tg}
+\index{shmemg\_putmem\_signal\_htg}
+\index{shmemg\_ctx\_putmem\_signal\_htg}
+\index{shmemg\_putmem\_signal\_nbi}
+\index{shmemg\_ctx\_putmem\_signal\_nbi}
+\index{shmemg\_putmem\_signal\_nbi\_tg}
+\index{shmemg\_ctx\_putmem\_signal\_nbi\_tg}
+\index{shmemg\_putmem\_signal\_nbi\_htg}
+\index{shmemg\_ctx\_putmem\_signal\_nbi\_htg}
+\index{shmemg\_signal\_fetch}
+
+% GPU-Centric Point-to-Point Synchronization
+\index{shmemg\_TYPENAME\_wait\_until}
+\index{shmemg\_TYPENAME\_test}
+\index{shmemg\_signal\_wait\_until}
+\index{shmemg\_wait\_until}
+\index{shmemg\_test}
+
+% GPU-Centric Memory Ordering
+\index{shmemg\_fence}
+\index{shmemg\_ctx\_fence}
+\index{shmemg\_quiet}
+\index{shmemg\_ctx\_quiet}
+
+% GPU-Centric Collective Operations
+\index{shmemg\_sync\_all}
+\index{shmemg\_sync\_all\_tg}
+\index{shmemg\_sync\_all\_htg}
+\index{shmemg\_team\_sync}
+\index{shmemg\_team\_sync\_tg}
+\index{shmemg\_team\_sync\_htg}
 
 \printindex
 
