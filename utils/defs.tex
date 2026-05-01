@@ -2,6 +2,7 @@
 
 \newcommand{\minitab}[2][l]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}
 
+
 \definecolor{ListingBG}{rgb}{0.91,0.91,0.91}
 \definecolor{shadecolor}{rgb}{0.92,0.92,0.92}
 
@@ -15,8 +16,8 @@
 \def\gb{\penalty10000\hskip 0pt plus 8em\penalty4800\hskip 0pt plus-8em%
 \penalty10000}
 
-% Searchable underscore
-\DeclareRobustCommand{\_}{\texttt{\char`\_}}
+% Searchable underscore with allowed line break after it
+\DeclareRobustCommand{\_}{\texttt{\char`\_}\discretionary{}{}{}}
 
 \def\colorswapnt{\colorlet{saved}{.}\color{ForestGreen}}
 \def\colorswapot{\colorlet{saved}{.}\color{red}}

@@ -156,8 +156,6 @@ The following are \textbf{not} defined:
 \item Extensions for non-GPU accelerators (FPGAs, DSPs, etc.)
 \end{itemize}
 
-\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 4: Execution Model
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -197,8 +195,6 @@ and for performing one-sided read (get), write (put), and atomic memory
 operations on symmetric objects within it from both the host and \ac{GPU}
 execution contexts. These routines follow the \ac{PGAS} programming model
 established by the \openshmem specification.
-
-\clearpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 5: Communication Model
@@ -278,8 +274,6 @@ ordering using \FUNC{shmem\_fence} and global ordering using
 \FUNC{shmem\_quiet}. Barrier and point-to-point wait/test operations may be used
 to coordinate access across \acp{PE}.
 
-\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 6: Team Management
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -344,8 +338,6 @@ atomic operations on the same location using a context derived from
 \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and a context derived from
 \CONST{SHMEM\_TEAM\_WORLD} result in undefined behavior.
 
-\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 7: Context Management
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -394,8 +386,6 @@ Host context & Without \CONST{SHMEM\_DEVICE\_CTX} (incl.\ \CONST{SHMEM\_CTX\_DEF
 non-device context for GPU-centric operations results in \textbf{undefined
 behavior}.
 
-\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 8: Language Bindings and Conformance
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -424,8 +414,6 @@ not use GPU-attached memory or the interfaces defined herein shall execute
 correctly and without observable change in behavior. The \ac{GPU} symmetric heap
 does not alter the behavior of existing routines when operating on CPU-attached
 memory from the default symmetric heap.
-
-\clearpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 10: Library Constants
@@ -487,8 +475,6 @@ same as an allocation without this hint. \\
 \hline
 \end{longtable}
 
-\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 11: Library Handles
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -528,8 +514,6 @@ on this default device context. \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be
 used for GPU-aware operations. \\
 \hline
 \end{longtable}
-
-\clearpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 12: Environment Variables
@@ -661,8 +645,6 @@ requested bits to determine whether the desired GPU capabilities are available:
 \end{itemize}
 }
 \end{apidefinition}
-
-\clearpage
 
 \subsection{Memory Management}\label{subsec:gpu_memmgmt}
 
@@ -873,10 +855,6 @@ specify the allowed memory locations for source and destination arguments.
 
 \subsubsection{Blocking Put}\label{subsec:ga_blocking_put}
 
-Routines: \FUNC{shmem\_put}, \FUNC{shmem\_\TYPENAME\_put},
-\FUNC{shmem\_put\SIZE}, \FUNC{shmem\_putmem}, and their \texttt{shmem\_ctx\_*}
-variants.
-
 Copies data from a contiguous local data object to a data object on a specified
 \ac{PE}.
 
@@ -893,9 +871,6 @@ GPU symmetric heap, static/global data \\
 
 \subsubsection{Scalar Put}\label{subsec:ga_scalar_put}
 
-Routines: \FUNC{shmem\_p}, \FUNC{shmem\_\TYPENAME\_p}, and their
-\texttt{shmem\_ctx\_*} variants.
-
 Copies one data item to a remote \ac{PE}. The \VAR{value} argument is passed by
 value; no memory location restriction applies.
 
@@ -908,9 +883,6 @@ value; no memory location restriction applies.
 \end{longtable}
 
 \subsubsection{Strided Put}\label{subsec:ga_strided_put}
-
-Routines: \FUNC{shmem\_iput}, \FUNC{shmem\_\TYPENAME\_iput},
-\FUNC{shmem\_iput\SIZE}, and their \texttt{shmem\_ctx\_*} variants.
 
 Copies strided data to a specified \ac{PE}.
 
@@ -926,10 +898,6 @@ GPU symmetric heap, static/global data \\
 \end{longtable}
 
 \subsubsection{Nonblocking Put}\label{subsec:ga_nbi_put}
-
-Routines: \FUNC{shmem\_put\_nbi}, \FUNC{shmem\_\TYPENAME\_put\_nbi},
-\FUNC{shmem\_put\SIZE\_nbi}, \FUNC{shmem\_putmem\_nbi}, and their
-\texttt{shmem\_ctx\_*} variants.
 
 Copies data from a contiguous local data object to a data object on a specified
 \ac{PE}.
@@ -951,10 +919,6 @@ specified in \openshmem 1.6.
 
 \subsubsection{Blocking Get}\label{subsec:ga_blocking_get}
 
-Routines: \FUNC{shmem\_get}, \FUNC{shmem\_\TYPENAME\_get},
-\FUNC{shmem\_get\SIZE}, \FUNC{shmem\_getmem}, and their \texttt{shmem\_ctx\_*}
-variants.
-
 Copies data from a specified \ac{PE}.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
@@ -970,9 +934,6 @@ GPU symmetric heap, static/global data \\
 
 \subsubsection{Scalar Get}\label{subsec:ga_scalar_get}
 
-Routines: \FUNC{shmem\_g}, \FUNC{shmem\_\TYPENAME\_g}, and their
-\texttt{shmem\_ctx\_*} variants.
-
 Copies one data item from a remote \ac{PE}. The return value is passed by value;
 no memory location restriction applies.
 
@@ -985,9 +946,6 @@ no memory location restriction applies.
 \end{longtable}
 
 \subsubsection{Strided Get}\label{subsec:ga_strided_get}
-
-Routines: \FUNC{shmem\_iget}, \FUNC{shmem\_\TYPENAME\_iget},
-\FUNC{shmem\_iget\SIZE}, and their \texttt{shmem\_ctx\_*} variants.
 
 Copies strided data from a specified \ac{PE}.
 
@@ -1003,10 +961,6 @@ GPU symmetric heap, static/global data \\
 \end{longtable}
 
 \subsubsection{Nonblocking Get}\label{subsec:ga_nbi_get}
-
-Routines: \FUNC{shmem\_get\_nbi}, \FUNC{shmem\_\TYPENAME\_get\_nbi},
-\FUNC{shmem\_get\SIZE\_nbi}, \FUNC{shmem\_getmem\_nbi}, and their
-\texttt{shmem\_ctx\_*} variants.
 
 Copies data from a contiguous remote data object on the specified \ac{PE} to the
 local data object.
@@ -1026,8 +980,6 @@ The \VAR{dest} data object shall not be accessed until the operation has been
 completed by a call to \FUNC{shmem\_quiet} or \FUNC{shmem\_pe\_quiet}, as
 specified in \openshmem 1.6.
 
-\clearpage
-
 \subsection{Atomic Memory Operations (AMO)}\label{subsec:gpu_aware_amo}
 
 An \ac{AMO} is a one-sided communication mechanism that combines memory read,
@@ -1042,11 +994,6 @@ no memory location restriction applies.
 
 \subsubsection{Non-fetching AMOs}\label{subsec:ga_nonfetch_amo}
 
-Routines: \FUNC{shmem\_atomic\_set}, \FUNC{shmem\_atomic\_add},
-\FUNC{shmem\_atomic\_inc}, \FUNC{shmem\_atomic\_and},
-\FUNC{shmem\_atomic\_or}, \FUNC{shmem\_atomic\_xor}, and their
-\texttt{shmem\_ctx\_*} variants.
-
 Atomically update a remote data object.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
@@ -1058,12 +1005,6 @@ Atomically update a remote data object.
 \end{longtable}
 
 \subsubsection{Fetching AMOs}\label{subsec:ga_fetch_amo}
-
-Routines: \FUNC{shmem\_atomic\_fetch}, \FUNC{shmem\_atomic\_swap},
-\FUNC{shmem\_atomic\_compare\_swap}, \FUNC{shmem\_atomic\_fetch\_add},
-\FUNC{shmem\_atomic\_fetch\_inc}, \FUNC{shmem\_atomic\_fetch\_and},
-\FUNC{shmem\_atomic\_fetch\_or}, \FUNC{shmem\_atomic\_fetch\_xor}, and their
-\texttt{shmem\_ctx\_*} variants.
 
 Atomically fetch or update a remote data object and return the prior value.
 
@@ -1078,14 +1019,6 @@ Atomically fetch or update a remote data object and return the prior value.
 The return value is passed by value; no memory location restriction applies.
 
 \subsubsection{Nonblocking AMOs}\label{subsec:ga_nbi_amo}
-
-Routines: \FUNC{shmem\_atomic\_fetch\_nbi}, \FUNC{shmem\_atomic\_swap\_nbi},
-\FUNC{shmem\_atomic\_compare\_swap\_nbi},
-\FUNC{shmem\_atomic\_fetch\_add\_nbi},
-\FUNC{shmem\_atomic\_fetch\_inc\_nbi},
-\FUNC{shmem\_atomic\_fetch\_and\_nbi},
-\FUNC{shmem\_atomic\_fetch\_or\_nbi},
-\FUNC{shmem\_atomic\_fetch\_xor\_nbi}, and their \texttt{shmem\_ctx\_*} variants.
 
 The nonblocking \ac{AMO} routines atomically fetch or update a remote data object
 without waiting for the operation to complete.
@@ -1104,8 +1037,6 @@ GPU symmetric heap, static/global data \\
 The \VAR{fetch} data object shall not be accessed until the operation has been
 completed by a call to \FUNC{shmem\_quiet}, as specified in \openshmem 1.6.
 
-\clearpage
-
 \subsection{Signaling Operations}\label{subsec:gpu_aware_signaling}
 
 The put-with-signal routines provide a method for copying data from a contiguous
@@ -1115,9 +1046,8 @@ method for reading the signal object.
 
 \subsubsection{Put-with-Signal}\label{subsec:ga_put_signal}
 
-Routines: \FUNC{shmem\_put\_signal}, \FUNC{shmem\_\TYPENAME\_put\_signal},
-\FUNC{shmem\_put\SIZE\_signal}, \FUNC{shmem\_putmem\_signal}, and their
-\texttt{shmem\_ctx\_*} variants.
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently update a remote flag to signal completion.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1137,10 +1067,9 @@ location restriction applies.
 
 \subsubsection{Nonblocking Put-with-Signal}\label{subsec:ga_put_signal_nbi}
 
-Routines: \FUNC{shmem\_put\_signal\_nbi},
-\FUNC{shmem\_\TYPENAME\_put\_signal\_nbi},
-\FUNC{shmem\_put\SIZE\_signal\_nbi}, \FUNC{shmem\_putmem\_signal\_nbi}, and
-their \texttt{shmem\_ctx\_*} variants.
+Copies data from a contiguous local data
+object to a data object on a specified \ac{PE} and subsequently update a remote
+flag to signal completion.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1160,8 +1089,6 @@ completed by a call to \FUNC{shmem\_quiet}, as specified in \openshmem 1.6.
 
 \subsubsection{Signal Fetch}\label{subsec:ga_signal_fetch}
 
-Routine: \FUNC{shmem\_signal\_fetch}.
-
 Fetches the signal update on a local data object.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
@@ -1172,8 +1099,6 @@ Fetches the signal update on a local data object.
 \hline
 \end{longtable}
 
-\clearpage
-
 \subsection{Point-to-Point Synchronization}\label{subsec:gpu_aware_p2p}
 
 The point-to-point synchronization routines provide a mechanism for
@@ -1182,8 +1107,7 @@ object.
 
 \subsubsection{Wait-Until}\label{subsec:ga_wait_until}
 
-Routines: \FUNC{shmem\_wait\_until}, \FUNC{shmem\_\TYPENAME\_wait\_until}, and
-their \texttt{shmem\_ctx\_*} variants.
+Wait for a variable on the local \ac{PE} to change.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1197,8 +1121,8 @@ The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
 
 \subsubsection{Wait-Until (Array Variants)}\label{subsec:ga_wait_until_array}
 
-Routines: \FUNC{shmem\_wait\_until\_all}, \FUNC{shmem\_wait\_until\_any},
-\FUNC{shmem\_wait\_until\_some}, and their vector variants.
+Wait on an array of variables on the local \ac{PE} until the specified wait
+condition is met.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1217,8 +1141,8 @@ using GPU-attached memory for these arguments results in undefined behavior.
 
 \subsubsection{Test}\label{subsec:ga_test}
 
-Routines: \FUNC{shmem\_test}, \FUNC{shmem\_\TYPENAME\_test}, and their
-\texttt{shmem\_ctx\_*} variants.
+Indicate whether a variable on the local \ac{PE} meets a specified test
+condition.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1230,8 +1154,8 @@ Routines: \FUNC{shmem\_test}, \FUNC{shmem\_\TYPENAME\_test}, and their
 
 \subsubsection{Test (Array Variants)}\label{subsec:ga_test_array}
 
-Routines: \FUNC{shmem\_test\_all}, \FUNC{shmem\_test\_any},
-\FUNC{shmem\_test\_some}, and their vector variants.
+Indicate whether variables within an array on the local \ac{PE} meet a specified
+test condition.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1250,7 +1174,7 @@ using GPU-attached memory for these arguments results in undefined behavior.
 
 \subsubsection{Signal-Wait-Until}\label{subsec:ga_signal_wait_until}
 
-Routine: \FUNC{shmem\_signal\_wait\_until}.
+Wait for a variable on the local \ac{PE} to change from a signaling operation.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1261,8 +1185,6 @@ Routine: \FUNC{shmem\_signal\_wait\_until}.
 \end{longtable}
 
 The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
-
-\clearpage
 
 \subsection{Memory Ordering}\label{subsec:gpu_aware_ordering}
 
@@ -1377,8 +1299,6 @@ a single memory domain and does not guarantee cross-domain visibility.
 }
 \end{apidefinition}
 
-\clearpage
-
 \subsubsection{SHMEM\_PUT\_SIGNAL (Cross-Domain Ordering)}\label{subsec:ga_put_signal_ordering}
 
 Copies data from a contiguous local data object to a data object on a specified
@@ -1442,8 +1362,6 @@ independent operations.
 
 \subsubsection{Global Synchronization}\label{subsec:ga_barrier}
 
-Routines: \FUNC{shmem\_barrier\_all}, \FUNC{shmem\_barrier}.
-
 \begin{apidefinition}
 \begin{Csynopsis}
 void shmem_barrier_all(void);
@@ -1483,8 +1401,6 @@ ensures completion and visibility of previously issued memory stores and does no
 ensure completion of remote memory updates issued through \openshmem routines.
 }
 \end{apidefinition}
-
-\clearpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 15: GPU-Centric Communication
@@ -1568,8 +1484,6 @@ return value.
 }
 \end{apidefinition}
 
-\clearpage
-
 \subsection{Context Management}\label{subsec:gc_context}
 
 Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
@@ -1632,8 +1546,6 @@ variants are collective across the threads in the specified group. All
 participating threads shall call the routine with the same arguments. If any
 thread in the group does not participate, or if arguments differ across threads,
 the behavior is undefined.
-
-\clearpage
 
 \subsubsection{Remote Memory Access (RMA)}\label{subsec:gc_rma}
 
@@ -1850,8 +1762,6 @@ None.
 }
 \end{apidefinition}
 
-\clearpage
-
 \subsubsection{Atomic Memory Operations (AMO)}\label{subsec:gc_amo}
 
 The \ac{AMO} routines in this section perform atomic read, update, or write
@@ -1872,11 +1782,6 @@ All \ac{AMO} routines operate at single-thread granularity. No thread group or
 hardware thread group variants are defined.
 
 \subsubsubsection{\textbf{Non-fetching AMOs}}\label{subsec:gc_nonfetch_amo}
-
-Routines: \FUNC{shmemg\_atomic\_set}, \FUNC{shmemg\_atomic\_add},
-\FUNC{shmemg\_atomic\_inc}, \FUNC{shmemg\_atomic\_and},
-\FUNC{shmemg\_atomic\_or}, \FUNC{shmemg\_atomic\_xor}, and their
-\texttt{shmemg\_ctx\_*} variants.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -1950,12 +1855,6 @@ None.
 \end{apidefinition}
 
 \subsubsubsection{\textbf{Fetching AMOs}}\label{subsec:gc_fetch_amo}
-
-Routines: \FUNC{shmemg\_atomic\_fetch}, \FUNC{shmemg\_atomic\_swap},
-\FUNC{shmemg\_atomic\_compare\_swap}, \FUNC{shmemg\_atomic\_fetch\_add},
-\FUNC{shmemg\_atomic\_fetch\_inc}, \FUNC{shmemg\_atomic\_fetch\_and},
-\FUNC{shmemg\_atomic\_fetch\_or}, \FUNC{shmemg\_atomic\_fetch\_xor}, and their
-\texttt{shmemg\_ctx\_*} variants.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2048,18 +1947,7 @@ The value of the remote data object prior to the atomic operation, of type
 }
 \end{apidefinition}
 
-\clearpage
-
 \subsubsubsection{\textbf{Nonblocking Fetching AMOs}}\label{subsec:gc_nbi_amo}
-
-Routines: \FUNC{shmemg\_atomic\_fetch\_nbi}, \FUNC{shmemg\_atomic\_swap\_nbi},
-\FUNC{shmemg\_atomic\_compare\_swap\_nbi},
-\FUNC{shmemg\_atomic\_fetch\_add\_nbi},
-\FUNC{shmemg\_atomic\_fetch\_inc\_nbi},
-\FUNC{shmemg\_atomic\_fetch\_and\_nbi},
-\FUNC{shmemg\_atomic\_fetch\_or\_nbi},
-\FUNC{shmemg\_atomic\_fetch\_xor\_nbi}, and their \texttt{shmemg\_ctx\_*}
-variants.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2137,8 +2025,6 @@ The \VAR{fetch}, \VAR{dest}, and \VAR{source} data objects shall reside in the
 None.
 }
 \end{apidefinition}
-
-\clearpage
 
 \subsubsection{Signaling Operations}\label{subsec:gc_signaling}
 
@@ -2307,8 +2193,6 @@ The value of the signal data object at \VAR{sig\_addr} on the calling \ac{PE}.
 }
 \end{apidefinition}
 
-\clearpage
-
 \subsubsection{Point-to-Point Synchronization}\label{subsec:gc_p2p}
 
 The point-to-point synchronization routines block or test until a symmetric data
@@ -2412,8 +2296,6 @@ condition.
 }
 \end{apidefinition}
 
-\clearpage
-
 \subsubsection{Memory Ordering}\label{subsec:gc_ordering}
 
 The memory ordering routines order or complete outstanding put, \ac{AMO}, and
@@ -2496,8 +2378,6 @@ None.
 operations on other contexts are not affected.
 }
 \end{apidefinition}
-
-\clearpage
 
 \subsubsection{Collective Operations}\label{subsec:gc_collectives}
 
