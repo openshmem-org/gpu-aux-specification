@@ -1783,6 +1783,8 @@ hardware thread group variants are defined.
 
 \subsubsubsection{\textbf{Non-fetching AMOs}}\label{subsec:gc_nonfetch_amo}
 
+Atomically updates a symmetric data object on a specified \ac{PE}.
+
 \begin{apidefinition}
 \begin{Csynopsis}
 __device__ void shmemg_TYPENAME_atomic_set(TYPE *dest, TYPE value, int pe);
@@ -1855,6 +1857,9 @@ None.
 \end{apidefinition}
 
 \subsubsubsection{\textbf{Fetching AMOs}}\label{subsec:gc_fetch_amo}
+
+Atomically fetches or updates a symmetric data object on a specified \ac{PE} and
+returns the prior value.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -1949,6 +1954,9 @@ The value of the remote data object prior to the atomic operation, of type
 
 \subsubsubsection{\textbf{Nonblocking Fetching AMOs}}\label{subsec:gc_nbi_amo}
 
+Initiates a nonblocking atomic fetch or update on a symmetric data object on a
+specified \ac{PE}.
+
 \begin{apidefinition}
 \begin{Csynopsis}
 __device__ void shmemg_TYPENAME_atomic_fetch_nbi(TYPE *fetch,
@@ -2040,6 +2048,9 @@ operands results in \textbf{undefined behavior}.
 
 \subsubsubsection{\textbf{Put-with-Signal}}\label{subsec:gc_put_signal}
 
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently updates a remote signal data object.
+
 \begin{apidefinition}
 \begin{Csynopsis}
 __device__ void shmemg_putmem_signal(void *dest, const void *source,
@@ -2110,6 +2121,9 @@ ordering between the signal update and another data transfer.
 \end{apidefinition}
 
 \subsubsubsection{\textbf{Nonblocking Put-with-Signal}}\label{subsec:gc_put_signal_nbi}
+
+Initiates a nonblocking copy of data to a specified \ac{PE} with a subsequent
+signal update.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2205,6 +2219,8 @@ default symmetric heap results in \textbf{undefined behavior}.
 
 \subsubsubsection{\textbf{Wait-Until}}\label{subsec:gc_wait_until}
 
+Blocks until a symmetric data object on the local \ac{PE} satisfies a condition.
+
 \begin{apidefinition}
 \begin{Csynopsis}
 __device__ void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
@@ -2239,6 +2255,9 @@ None.
 
 \subsubsubsection{\textbf{Test}}\label{subsec:gc_test}
 
+Tests whether a symmetric data object on the local \ac{PE} satisfies a
+condition.
+
 \begin{apidefinition}
 \begin{Csynopsis}
 __device__ int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
@@ -2266,6 +2285,8 @@ performed once and returns without blocking.
 \end{apidefinition}
 
 \subsubsubsection{\textbf{Signal-Wait-Until}}\label{subsec:gc_signal_wait_until}
+
+Blocks until a local signal data object satisfies a condition.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2303,6 +2324,9 @@ put-with-signal operations issued from within a \ac{GPU} device kernel. All
 memory ordering routines operate at single-thread granularity.
 
 \subsubsubsection{\textbf{SHMEMG\_FENCE}}\label{subsec:gc_fence}
+
+Ensures ordering of delivery of put, \ac{AMO}, and put-with-signal operations to
+symmetric data objects.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2342,6 +2366,9 @@ context. It does not ensure completion or global visibility; use
 \end{apidefinition}
 
 \subsubsubsection{\textbf{SHMEMG\_QUIET}}\label{subsec:gc_quiet}
+
+Waits for completion of all outstanding put, \ac{AMO}, and put-with-signal
+operations to symmetric data objects.
 
 \begin{apidefinition}
 \begin{Csynopsis}
