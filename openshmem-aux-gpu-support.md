@@ -638,8 +638,6 @@ The RMA routines defined in OpenSHMEM 1.6 transfer data between a local data obj
 
 #### Blocking Put
 
-Routines: `shmem_put`, `shmem_TYPENAME_put`, `shmem_putSIZE`, `shmem_putmem`, and their `shmem_ctx_*` variants.
-
 Copies data from a contiguous local data object to a data object on a specified PE.
 
 | Argument | Direction | Allowed Locations |
@@ -649,8 +647,6 @@ Copies data from a contiguous local data object to a data object on a specified 
 
 #### Scalar Put
 
-Routines: `shmem_p`, `shmem_TYPENAME_p`, and their `shmem_ctx_*` variants.
-
 Copies one data item to a remote PE. The `value` argument is passed by value; no memory location restriction applies.
 
 | Argument | Direction | Allowed Locations |
@@ -658,8 +654,6 @@ Copies one data item to a remote PE. The `value` argument is passed by value; no
 | `dest` | OUT | Default symmetric heap, GPU symmetric heap, static/global data |
 
 #### Strided Put
-
-Routines: `shmem_iput`, `shmem_TYPENAME_iput`, `shmem_iputSIZE`, and their `shmem_ctx_*` variants.
 
 Copies strided data to a specified PE.
 
@@ -669,8 +663,6 @@ Copies strided data to a specified PE.
 | `dest` | OUT | Default symmetric heap, GPU symmetric heap, static/global data |
 
 #### Nonblocking Put
-
-Routines: `shmem_put_nbi`, `shmem_TYPENAME_put_nbi`, `shmem_putSIZE_nbi`, `shmem_putmem_nbi`, and their `shmem_ctx_*` variants.
 
 The nonblocking put routines provide a method for copying data from a contiguous local data object to a data object on a specified PE.
 
@@ -683,8 +675,6 @@ The `source` data object shall not be modified until the operation has been comp
 
 #### Blocking Get
 
-Routines: `shmem_get`, `shmem_TYPENAME_get`, `shmem_getSIZE`, `shmem_getmem`, and their `shmem_ctx_*` variants.
-
 Copies data from a specified PE.
 
 | Argument | Direction | Allowed Locations |
@@ -694,8 +684,6 @@ Copies data from a specified PE.
 
 #### Scalar Get
 
-Routines: `shmem_g`, `shmem_TYPENAME_g`, and their `shmem_ctx_*` variants.
-
 Copies one data item from a remote PE. The return value is passed by value; no memory location restriction applies.
 
 | Argument | Direction | Allowed Locations |
@@ -703,8 +691,6 @@ Copies one data item from a remote PE. The return value is passed by value; no m
 | `source` | IN | Default symmetric heap, GPU symmetric heap, static/global data |
 
 #### Strided Get
-
-Routines: `shmem_iget`, `shmem_TYPENAME_iget`, `shmem_igetSIZE`, and their `shmem_ctx_*` variants.
 
 Copies strided data from a specified PE.
 
@@ -714,8 +700,6 @@ Copies strided data from a specified PE.
 | `source` | IN | Default symmetric heap, GPU symmetric heap, static/global data |
 
 #### Nonblocking Get
-
-Routines: `shmem_get_nbi`, `shmem_TYPENAME_get_nbi`, `shmem_getSIZE_nbi`, `shmem_getmem_nbi`, and their `shmem_ctx_*` variants.
 
 The nonblocking get routines provide a method for copying data from a contiguous remote data object on the specified PE to the local data object.
 
@@ -734,8 +718,6 @@ The `value`, `cond`, and `cmp_value` arguments are passed by value; no memory lo
 
 #### Non-fetching AMOs
 
-Routines: `shmem_atomic_set`, `shmem_atomic_add`, `shmem_atomic_inc`, `shmem_atomic_and`, `shmem_atomic_or`, `shmem_atomic_xor`, and their `shmem_ctx_*` variants.
-
 Atomically update a remote data object.
 
 | Argument | Direction | Allowed Locations |
@@ -743,8 +725,6 @@ Atomically update a remote data object.
 | `dest` | OUT | Default symmetric heap, GPU symmetric heap, static/global data |
 
 #### Fetching AMOs
-
-Routines: `shmem_atomic_fetch`, `shmem_atomic_swap`, `shmem_atomic_compare_swap`, `shmem_atomic_fetch_add`, `shmem_atomic_fetch_inc`, `shmem_atomic_fetch_and`, `shmem_atomic_fetch_or`, `shmem_atomic_fetch_xor`, and their `shmem_ctx_*` variants.
 
 Atomically fetch or update a remote data object and return the prior value.
 
@@ -755,8 +735,6 @@ Atomically fetch or update a remote data object and return the prior value.
 The return value is passed by value; no memory location restriction applies.
 
 #### Nonblocking AMOs
-
-Routines: `shmem_atomic_fetch_nbi`, `shmem_atomic_swap_nbi`, `shmem_atomic_compare_swap_nbi`, `shmem_atomic_fetch_add_nbi`, `shmem_atomic_fetch_inc_nbi`, `shmem_atomic_fetch_and_nbi`, `shmem_atomic_fetch_or_nbi`, `shmem_atomic_fetch_xor_nbi`, and their `shmem_ctx_*` variants.
 
 The nonblocking AMO routines provide a method for atomically fetching or updating a remote data object without waiting for the operation to complete.
 
@@ -773,8 +751,6 @@ The put-with-signal routines provide a method for copying data from a contiguous
 
 #### Put-with-Signal
 
-Routines: `shmem_put_signal`, `shmem_TYPENAME_put_signal`, `shmem_putSIZE_signal`, `shmem_putmem_signal`, and their `shmem_ctx_*` variants.
-
 Copies data from a contiguous local data object to a data object on a specified PE and subsequently updates a remote flag to signal completion.
 
 | Argument | Direction | Allowed Locations |
@@ -786,8 +762,6 @@ Copies data from a contiguous local data object to a data object on a specified 
 The `signal` and `sig_op` arguments are passed by value; no memory location restriction applies.
 
 #### Nonblocking Put-with-Signal
-
-Routines: `shmem_put_signal_nbi`, `shmem_TYPENAME_put_signal_nbi`, `shmem_putSIZE_signal_nbi`, `shmem_putmem_signal_nbi`, and their `shmem_ctx_*` variants.
 
 The nonblocking put-with-signal routines copy data from a contiguous local data object to a data object on a specified PE and subsequently update a remote flag to signal completion.
 
@@ -801,8 +775,6 @@ The `source` data object shall not be modified until the operation has been comp
 
 #### Signal Fetch
 
-Routine: `shmem_signal_fetch`.
-
 Fetches the signal update on a local data object.
 
 | Argument | Direction | Allowed Locations |
@@ -815,8 +787,6 @@ The point-to-point synchronization routines provide a mechanism for synchronizat
 
 #### Wait-Until
 
-Routines: `shmem_wait_until`, `shmem_TYPENAME_wait_until`, and their `shmem_ctx_*` variants.
-
 Wait for a variable on the local PE to change.
 
 | Argument | Direction | Allowed Locations |
@@ -826,8 +796,6 @@ Wait for a variable on the local PE to change.
 The `cmp` and `cmp_value` arguments are passed by value; no memory location restriction applies.
 
 #### Wait-Until (Array Variants)
-
-Routines: `shmem_wait_until_all`, `shmem_wait_until_any`, `shmem_wait_until_some`, and their vector variants.
 
 Wait on an array of variables on the local PE until the specified wait condition is met.
 
@@ -841,8 +809,6 @@ The `status` and `indices` arguments shall reside in CPU-attached memory; using 
 
 #### Test
 
-Routines: `shmem_test`, `shmem_TYPENAME_test`, and their `shmem_ctx_*` variants.
-
 Indicate whether a variable on the local PE meets a specified test condition.
 
 | Argument | Direction | Allowed Locations |
@@ -850,8 +816,6 @@ Indicate whether a variable on the local PE meets a specified test condition.
 | `ivar` | IN | Default symmetric heap, GPU symmetric heap, static/global data |
 
 #### Test (Array Variants)
-
-Routines: `shmem_test_all`, `shmem_test_any`, `shmem_test_some`, and their vector variants.
 
 Indicate whether variables within an array on the local PE meet a specified test condition.
 
@@ -864,8 +828,6 @@ Indicate whether variables within an array on the local PE meet a specified test
 The `status` and `indices` arguments shall reside in CPU-attached memory; using GPU-attached memory for these arguments results in undefined behavior.
 
 #### Signal-Wait-Until
-
-Routine: `shmem_signal_wait_until`.
 
 Wait for a variable on the local PE to change from a signaling operation.
 
@@ -1032,8 +994,6 @@ The following example illustrates the use of `shmem_put_signal` when the data an
 In this pattern, PE:0 issues a put-with-signal where the `dest` data object resides in the GPU symmetric heap on PE:1 and the `sig_addr` signal data object resides in the default symmetric heap on PE:1. When PE:1 observes the signal update, the data is guaranteed to be delivered to the GPU symmetric heap. PE:1 shall perform appropriate host-device synchronization before accessing the data in GPU-attached memory.
 
 ##### Global Synchronization
-
-Routines: `shmem_barrier_all`, `shmem_barrier`.
 
 ###### Synopsis
 
@@ -1373,8 +1333,6 @@ Each routine has two variants: a context-explicit variant where the context hand
 
 ##### Non-fetching AMOs
 
-Routines: `shmemg_atomic_set`, `shmemg_atomic_add`, `shmemg_atomic_inc`, `shmemg_atomic_and`, `shmemg_atomic_or`, `shmemg_atomic_xor`, and their `shmemg_ctx_*` variants.
-
 Atomically updates a symmetric data object on a specified PE.
 
 ###### Synopsis
@@ -1434,8 +1392,6 @@ None.
 ---
 
 ##### Fetching AMOs
-
-Routines: `shmemg_atomic_fetch`, `shmemg_atomic_swap`, `shmemg_atomic_compare_swap`, `shmemg_atomic_fetch_add`, `shmemg_atomic_fetch_inc`, `shmemg_atomic_fetch_and`, `shmemg_atomic_fetch_or`, `shmemg_atomic_fetch_xor`, and their `shmemg_ctx_*` variants.
 
 Atomically fetches or updates a symmetric data object on a specified PE and returns the prior value.
 
@@ -1505,8 +1461,6 @@ The value of the remote data object at `dest` or `source` prior to the atomic op
 ---
 
 ##### Nonblocking Fetching AMOs
-
-Routines: `shmemg_atomic_fetch_nbi`, `shmemg_atomic_swap_nbi`, `shmemg_atomic_compare_swap_nbi`, `shmemg_atomic_fetch_add_nbi`, `shmemg_atomic_fetch_inc_nbi`, `shmemg_atomic_fetch_and_nbi`, `shmemg_atomic_fetch_or_nbi`, `shmemg_atomic_fetch_xor_nbi`, and their `shmemg_ctx_*` variants.
 
 Initiates a nonblocking atomic fetch or update on a symmetric data object on a specified PE.
 
@@ -1732,8 +1686,6 @@ The `cmp` argument is a comparison operator from the set of OpenSHMEM comparison
 
 ##### Wait-Until
 
-Routine: `shmemg_TYPENAME_wait_until`.
-
 Blocks until a symmetric data object on the local PE satisfies a condition.
 
 ###### Synopsis
@@ -1767,8 +1719,6 @@ None.
 ---
 
 ##### Test
-
-Routine: `shmemg_TYPENAME_test`.
 
 Tests whether a symmetric data object on the local PE satisfies a condition.
 

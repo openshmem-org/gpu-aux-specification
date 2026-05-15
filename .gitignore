@@ -1,0 +1,9 @@
+# LaTeX generated files
+*.aux
+*.idx
+*.ilg
+*.ind
+*.log
+*.out
+*.toc
+*.pdf

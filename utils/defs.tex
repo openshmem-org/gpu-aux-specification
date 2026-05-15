@@ -1,0 +1,250 @@
+\makeindex
+
+\newcommand{\minitab}[2][l]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}
+
+
+\definecolor{ListingBG}{rgb}{0.91,0.91,0.91}
+\definecolor{shadecolor}{rgb}{0.92,0.92,0.92}
+
+\hyphenation{Open-SHMEM}
+
+\renewcommand{\chaptername}{Chapter}
+\renewcommand{\appendixname}{Annex}
+\Crefname{appendix}{Annex}{Annexes}
+
+% Place some penalty for doing the break
+\def\gb{\penalty10000\hskip 0pt plus 8em\penalty4800\hskip 0pt plus-8em%
+\penalty10000}
+
+% Searchable underscore with allowed line break after it
+\DeclareRobustCommand{\_}{\texttt{\char`\_}\discretionary{}{}{}}
+
+\def\colorswapnt{\colorlet{saved}{.}\color{ForestGreen}}
+\def\colorswapot{\colorlet{saved}{.}\color{red}}
+\def\prevcolor{\color{saved}}
+
+\newcommand{\newtext}[1]{\textcolor{ForestGreen}{#1}}
+\newcommand{\oldtext}[1]{\textcolor{magenta}{\sout{#1}}}
+\newcommand{\insertDocVersion}{0.1}
+\newcommand{\openshmem}[1][]{%
+  {Open\-SHMEM\ifthenelse{\equal{#1}{}}{}{~#1}}\xspace}
+\newcommand{\HEADER}[1]{\textit{#1}}
+\newcommand{\FUNC}[1]{\textit{#1}}
+\newcommand{\CTYPE}[1]{\textit{#1}}
+\newcommand{\VAR}[1]{\textit{#1}}
+\newcommand{\ENVVAR}[1]{\textit{#1}}
+\newcommand{\CONST}[1]{\textit{#1}}
+\newcommand{\KEYWORD}[1]{\textit{#1}}
+%%
+\newcommand{\CorCpp}{\textit{C/C++}\xspace}
+\newcommand{\Cstd}[1][]{%
+  \textit{C\ifthenelse{\equal{#1}{}}{}{#1}}\xspace}
+%%
+\newcommand{\TYPE}{\emph{TYPE}}
+\newcommand{\TYPENAME}{\emph{TYPENAME}}
+\newcommand{\SIZE}{\emph{SIZE}}
+
+\newcommand{\source}{\textit{source}}
+\newcommand{\dest}{\textit{dest}}
+\newcommand{\PUT}{\textit{Put}}
+\newcommand{\GET}{\textit{Get}}
+\newcommand{\OPR}[1]{\textit{#1}}
+\newcommand{\shmemprefix}{\textit{SHMEM\_}}
+\newcommand{\shmemprefixLC}{\textit{shmem\_}}
+\newcommand{\shmemgprefix}{\textit{shmemg\_}}
+\newcommand{\ith}{${\textit{i}^{\text{\tiny th}}}$}
+\newcommand{\jth}{${\textit{j}^{\text{\tiny th}}}$}
+
+%% Generate indexed reference.
+\newcommand{\EnvVarIndex}[1]{\index{#1}}
+\newcommand{\FuncIndex}[1]{\index{#1}}
+\newcommand{\LibConstIndex}[1]{\index{#1}}
+\newcommand{\LibHandleIndex}[1]{\index{#1}}
+\newcommand{\TableIndex}[1]{\index{#1}\index{Tables!#1}}
+%% Write text and generate reference.
+\newcommand{\EnvVarRef}[1]{\ENVVAR{#1}\EnvVarIndex{#1}}
+\newcommand{\FuncRef}[1]{\FUNC{#1}\FuncIndex{#1}}
+\newcommand{\LibConstRef}[1]{\CONST{#1}\LibConstIndex{#1}}
+\newcommand{\LibHandleRef}[1]{\CONST{#1}\LibHandleIndex{#1}}
+\newcommand{\TableCaptionRef}[1]{\caption{#1}\TableIndex{#1}}
+%% Specialized declaration/creation and generate reference.
+\newcommand{\EnvVarDecl}[1]{\EnvVarRef{#1}}
+\newcommand{\FuncDecl}[1]{{\ListingsCurrentStyle{#1}}\FuncIndex{#1}}
+\newcommand{\FuncParam}[1]{{\ListingsParamStyle{#1}}}
+\newcommand{\LibConstDecl}[2][\CorCpp]{%
+  \parbox[t]{5cm}{~\\[-4pt] #1: \\\hspace*{8mm} \LibConstRef{#2} \\~}}
+\newcommand{\LibHandleDecl}[2][\CorCpp]{%
+  \parbox[t]{0pt}{~\\[-4pt] #1: \\\hspace*{8mm} \LibHandleRef{#2} \\~}}
+
+\newcommand{\subsubsubsection}[1]{\paragraph{#1}\mbox{}\par\nobreak}
+\Crefname{paragraph}{Section}{Sections}
+\setlength{\parindent}{0pt}
+
+\begin{acronym}
+\acro{RMA}{Remote Memory Access}
+\acro{RMO}{\emph{Remote Memory Operation}}
+\acro{AMO}{Atomic Memory Operation}
+\acro{PE}{\emph{Processing Element}}
+\acrodefplural{PE}[PEs]{\emph{Processing Elements}}
+\acro{PGAS}{\emph{Partitioned Global Address Space}}
+\acro{API}{\emph{Application Programming Interface}}
+\acro{GPU}{\emph{Graphics Processing Unit}}
+\end{acronym}
+
+% Remove whitespace and retain commas when using cleveref's `\cref`.
+\makeatletter
+\let\org@@cref\@cref
+\renewcommand*{\@cref}[2]{%
+  \edef\process@me{%
+    \noexpand\org@@cref{#1}{\zap@space#2 \@empty}%
+  }\process@me
+}
+\makeatother
+\newcommand{\ChangelogRef}[1]{\\See \cref{#1}.\space}
+
+% Grab current listings style for use in environment escape to LaTeX.
+\makeatletter
+\newcommand\ListingsCurrentStyle{}
+\lst@AddToHook{Output}{\global\let\ListingsCurrentStyle\lst@thestyle}
+\lst@AddToHook{OutputOther}{\global\let\ListingsCurrentStyle\lst@thestyle}
+\makeatother
+
+%
+% Use Sans Serif font for sections
+%
+\makeatletter
+\def\section{\@startsection {section}{1}{\z@}{-3.5ex plus -1ex minus
+-.2ex}{2.3ex plus .2ex}{\Large\sf}}
+\def\subsection{\@startsection{subsection}{2}{\z@}{-3.25ex plus -1ex minus
+-.2ex}{1.5ex plus .2ex}{\large\sf}}
+\def\subsubsection{\@startsection{subsubsection}{3}{\z@}{-3.25ex plus
+-1ex minus -.2ex}{1.5ex plus .2ex}{\normalsize\sf\bf}}
+\def\paragraph{\@startsection {paragraph}{4}{\z@}{3.25ex plus 1ex minus .2ex}
+{-1em}{\normalsize\sf\bf}}
+\makeatother
+
+%
+% Listings styles
+%
+
+\newcommand{\ListingsParamStyle}{\bfseries\itshape\color{CadetBlue}}
+
+\definecolor{DarkGreen}{rgb}{0, 0.25, 0}
+
+\lstdefinestyle{SourceListingsDefault}{
+  language={C},
+  breaklines=true,
+  breakatwhitespace=true,
+  escapechar=@,
+  tabsize=2,
+  basicstyle=\ttfamily\footnotesize,
+  showstringspaces=false,
+  frame=single,
+  classoffset=0,
+  keywords={\#include, \#pragma, \#if, \#ifdef, \#else, \#endif},
+  keywordstyle=\bfseries\color{CadetBlue},
+  classoffset=1,
+  keywords={
+    if, else, for, while, do, return, break, continue,
+    static, const, volatile,
+    sizeof, typedef, struct, union,
+    switch, case, default, goto,
+  },
+  keywordstyle=\bfseries\color{Orchid},
+  classoffset=2,
+  keywords={
+    __device__, _Thread_local, _Noreturn,
+    void, bool, _Bool, unsigned, char, short, int, long,
+    float, double, _Complex, complex, size_t, ptrdiff_t,
+    int8_t, int16_t, int32_t, int64_t,
+    uint8_t, uint16_t, uint32_t, uint64_t,
+    shmem_ctx_t, shmem_team_t, shmem_team_config_t,
+    FILE,
+  },
+  keywordstyle=\color{DarkGreen},
+  classoffset=3,
+  keywords={NULL},
+  keywordstyle=\color{MidnightBlue},
+  classoffset=4,
+  keywords={TYPE, TYPENAME, SIZE},
+  keywordstyle=\ListingsParamStyle,
+  commentstyle=\itshape\color{BrickRed},
+  stringstyle=\color{DarkOrchid},
+  backgroundcolor=\color{white},
+}
+
+\definecolor{gray}{rgb}{0.97,0.97,0.97}
+
+\lstdefinestyle{PrototypeListingsDefault}{
+  style=SourceListingsDefault,
+  frame=none,
+  backgroundcolor=\color{gray},
+}
+
+\lstset{style=SourceListingsDefault}
+
+%
+% Library API description template commands
+%
+
+\newcommand{\apisummary}[1]{
+    #1
+\hfill
+}
+
+\newenvironment{apidefinition}{
+\begin{description}
+\item[SYNOPSIS] \hfill \\ \\
+\vspace{-2em}
+}
+{
+\end{description} % ends \begin{description} from \apidescription
+\end{description}
+}
+
+\lstnewenvironment{Csynopsis}
+{
+  \textbf{C:}
+  \lstset{style=PrototypeListingsDefault}
+}{}
+
+\lstnewenvironment{CsynopsisCol}
+{
+  \lstset{style=PrototypeListingsDefault}
+}{}
+
+\newenvironment{apiarguments}{
+\newcommand{\apiargument}[3]{
+\begin{tabular}{p{2cm} p{2cm} p{10cm}}
+\textbf{##1} & \textit{##2} & {##3} \\
+\end{tabular}
+}
+\hfill
+\item[DESCRIPTION] \hfill
+
+\begin{description}
+\item[Arguments] \hfill \\
+}
+{
+\hfill
+\end{description}
+}
+
+\newcommand{\apidescription}[1]{
+\begin{description}
+\vspace{-1em}
+\item[API Description] \hfill \\
+    \sloppy
+    #1
+\hfill
+}
+
+\newcommand{\apireturnvalues}[1]{
+\item[Return Values] \hfill \\
+    #1
+}
+
+\newcommand{\apinotes}[1]{
+\item[Notes] \hfill \\
+    #1
+}

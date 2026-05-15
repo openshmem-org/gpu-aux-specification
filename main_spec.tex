@@ -1,0 +1,2962 @@
+\documentclass[10pt,oneside]{book}
+
+\input{utils/packages}
+
+\input{utils/defs}
+
+\begin{document}
+
+\hypersetup{pageanchor=true,citecolor=blue}
+
+% Set header/footer for opening content
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[L]{\insertDocVersion}
+\fancyhead[C]{--- DRAFT ---}
+\SetWatermarkText{DRAFT}
+\SetWatermarkScale{1}
+\SetWatermarkLightness{.91}
+\fancyfoot[C]{\thepage}
+
+\pagenumbering{roman}
+
+% Cover page
+\thispagestyle{empty}
+\begin{center}
+\textbf{\Huge \openshmem}
+\par
+\end{center}
+
+\begin{center}
+\textbf{\LARGE Auxiliary Specification for GPU Support}\\
+\vspace{1em}
+\url{http://www.openshmem.org/}
+\par
+\end{center}
+
+\begin{center}
+Version \insertDocVersion
+\par
+\end{center}
+
+\vspace{0.5in}
+\begin{center}
+Based on \openshmem 1.6
+\end{center}
+
+\vspace{0.5in}
+\begin{center}
+\today
+\end{center}
+
+\vfill{}
+
+\pagebreak{}
+
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+\tableofcontents
+
+\mainmatter
+
+% Set header/footer for main content
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\thesection}{\arabic{section}}
+
+\setlength{\parskip}{3pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 1: Introduction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}\label{sec:introduction}
+
+\openshmem Auxiliary Specification for GPU Support defines extensions to the
+\openshmem library interface specification for GPU-aware and GPU-centric
+communication. These extensions allow \openshmem implementations to use
+GPU-attached memory buffers for remote memory access, atomic memory operations,
+and synchronization while maintaining compatibility with the core \openshmem
+programming model.
+
+Two communication paradigms are defined:
+
+\begin{description}
+\item[GPU-Aware Communication]
+A programming model in which GPU-attached memory buffers may be used as source
+or destination operands in \openshmem operations. The host \ac{PE} invokes
+\openshmem routines, and the implementation shall manage data transfers
+involving GPU-attached memory.
+
+\item[GPU-Centric Communication]
+A programming model in which communication operations may be initiated directly
+from \ac{GPU} execution contexts, such as device kernels. \ac{GPU} threads invoke
+\openshmem routines without host-side intervention.
+\end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 2: Relationship to OpenSHMEM
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Relationship to OpenSHMEM}\label{sec:relationship}
+
+The \openshmem Auxiliary Specification for GPU Support is based on the
+\openshmem specification version 1.6. It supplements, but does not replace, the
+\openshmem 1.6 specification. All routines, semantics, and requirements defined
+in \openshmem 1.6 remain valid. Where new concepts are introduced or existing
+semantics are modified, such changes are explicitly identified.
+
+The extensions maintain the fundamental principles established by the \openshmem
+specification, including:
+\begin{itemize}
+\item Processing elements (\acp{PE}) and symmetric data objects
+\item Team-based process subsets and communication contexts
+\item Memory ordering and synchronization guarantees
+\item Collective and point-to-point communication semantics
+\end{itemize}
+
+Implementation of these extensions is optional. An \openshmem implementation may
+support GPU-aware communication, GPU-centric communication, both, or neither.
+Applications may query implementation capabilities at runtime.
+
+Applications that do not utilize GPU-attached memory buffers or the interfaces
+defined herein shall continue to execute correctly.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 3: Specification Scope
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Specification Scope}\label{sec:scope}
+
+The following are defined:
+\begin{itemize}
+\item Extensions to the \openshmem memory model to support a \ac{GPU} symmetric
+  heap allocated from GPU-attached memory
+\item Host-side interfaces for allocating and managing symmetric data objects
+  within the \ac{GPU} symmetric heap
+\item Device-side interfaces for initiating communication operations from
+  \ac{GPU} execution contexts (\ac{GPU} kernels)
+\item Semantics for data movement, atomic memory operations, and synchronization
+  involving GPU-attached symmetric memory
+\item Query interfaces for discovering implementation capabilities and symmetric
+  memory object properties
+\item Requirements for memory ordering and coherence when both the default and
+  \ac{GPU} symmetric heaps are in use
+\end{itemize}
+
+The following are \textbf{not} defined:
+\begin{itemize}
+\item GPU programming models, device kernel languages, or GPU runtime APIs
+\item Mechanisms for selecting or assigning GPUs to processing elements
+\item Specific GPU architectures, vendor-specific features, or device driver
+  interfaces
+\item Performance characteristics, optimization requirements, or benchmarking
+  methodologies
+\item Network hardware capabilities, protocols, or transport-layer mechanisms
+\item Extensions for non-GPU accelerators (FPGAs, DSPs, etc.)
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 4: Execution Model
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Execution Model}\label{sec:execution_model}
+
+The execution model defined by the \openshmem specification is extended by the
+introduction of a \ac{GPU} symmetric heap allocated from GPU-attached memory.
+This \ac{GPU} symmetric heap is distinct from, and in addition to, the default
+symmetric heap defined by the \openshmem specification.
+
+\subsection{Processing Elements and GPU Association}\label{subsec:pe_gpu_association}
+
+The concept of a processing element (\ac{PE}) is defined by the \openshmem
+specification. Each \ac{PE} that utilizes the GPU support defined by this
+specification shall be associated with exactly one \ac{GPU}. The association
+between a \ac{PE} and its \ac{GPU} shall be established during initialization of
+the \openshmem library and shall remain fixed for the duration of the program.
+
+The mechanism by which a \ac{GPU} is selected for association with a \ac{PE} is
+outside the scope of this specification. The application or runtime environment
+shall select the \ac{GPU} prior to initialization of the \openshmem library. The
+\openshmem implementation shall use the \ac{GPU} that has been made current or
+otherwise designated by the execution environment at the time of library
+initialization.
+
+\textbf{Constraint:} A \ac{PE} shall not be associated with more than one
+\ac{GPU}. A \ac{PE} that has no associated \ac{GPU} shall not invoke the
+\ac{GPU} interfaces defined herein. All \acp{PE} in the \openshmem program shall
+have a valid PE-to-GPU association to use these interfaces.
+
+\subsection{GPU Symmetric Heap}\label{subsec:gpu_symmetric_heap}
+
+The \ac{GPU} symmetric heap is distributed across \acp{PE}, with each \ac{PE}'s
+allocation residing in the memory of its associated \ac{GPU}. Routines are
+provided for allocating and managing the \ac{GPU} symmetric heap from the host,
+and for performing one-sided read (get), write (put), and atomic memory
+operations on symmetric objects within it from both the host and \ac{GPU}
+execution contexts. These routines follow the \ac{PGAS} programming model
+established by the \openshmem specification.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 5: Communication Model
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Communication Model}\label{sec:communication_model}
+
+The one-sided communication semantics defined by the \openshmem specification
+apply to symmetric objects allocated from the \ac{GPU} symmetric heap. All
+routines defined in \openshmem 1.6---including \ac{RMA}, \ac{AMO}, signaling,
+synchronization, and collective operations---retain their specified behavior and
+may be used with GPU-attached memory buffers.
+
+The remote operand in a communication operation may reside in either the default
+symmetric heap or the \ac{GPU} symmetric heap. The same \openshmem routine shall
+be used regardless of whether the remote memory is CPU-attached or GPU-attached.
+
+\subsection{GPU-Aware Communication}\label{subsec:gpu_aware_comm}
+
+GPU-aware communication allows GPU-attached memory buffers to be used as
+operands in existing \openshmem routines without modification to interfaces or
+calling conventions. GPU-attached memory buffers may be used as:
+
+\begin{itemize}
+\item \textbf{Source operands} in put operations
+\item \textbf{Destination operands} in get operations
+\item \textbf{Local operands} in atomic memory operations
+\item \textbf{Target buffers} in point-to-point synchronization operations
+\item \textbf{Local buffers} in collective operations
+\end{itemize}
+
+The \openshmem implementation shall manage data movement between the \ac{GPU}
+memory hierarchy and the network interface. The completion and ordering semantics
+defined in \openshmem 1.6 shall apply.
+
+\subsection{GPU-Centric Communication}\label{subsec:gpu_centric_comm}
+
+GPU-centric communication allows \ac{GPU} threads to invoke put, get, and atomic
+memory operations directly from \ac{GPU} execution contexts. Device-initiated
+operations use the same addressing model defined by the \openshmem
+specification: a symmetric address and a target \ac{PE} identifier. The
+symmetric address shall be the address returned by the \ac{GPU} symmetric heap
+allocation routine and is valid only at the \ac{PE} where the allocation was
+performed.
+
+\textbf{Note:} Support for GPU-centric communication is independent of support
+for GPU-aware communication; an implementation may support either or both.
+
+\subsection{Supported Operations}\label{subsec:supported_operations}
+
+The following operations are supported on symmetric objects in the \ac{GPU}
+symmetric heap:
+
+\begin{longtable}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Operation} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Operation} & \textbf{Description} \\
+\hline
+\endhead
+\ac{RMA} & Put and get operations, including bulk and scalar variants \\
+\hline
+\ac{AMO} & Fetch-and-operate and compare-and-swap variants \\
+\hline
+Signaling Operations & Combined data transfer and signal update at the target \ac{PE} \\
+\hline
+Synchronization & Barrier, fence, quiet, and point-to-point wait/test primitives \\
+\hline
+\end{longtable}
+
+\subsection{Ordering and Completion}\label{subsec:ordering_completion}
+
+Ordering and completion semantics follow the \openshmem memory model. Updates to
+symmetric objects are unordered by default. A \ac{PE} may enforce point-to-point
+ordering using \FUNC{shmem\_fence} and global ordering using
+\FUNC{shmem\_quiet}. Barrier and point-to-point wait/test operations may be used
+to coordinate access across \acp{PE}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 6: Team Management
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Team Management}\label{sec:team_management}
+
+Two predefined device teams supplement the predefined teams defined by the
+\openshmem specification, \CONST{SHMEM\_TEAM\_WORLD} and
+\CONST{SHMEM\_TEAM\_SHARED}. The existing \FUNC{shmem\_team\_split\_*} routines
+may be used with device teams as parent teams.
+
+\subsection{Predefined Device Teams}\label{subsec:predefined_device_teams}
+
+\subsubsection{SHMEM\_DEVICE\_TEAM\_WORLD}\label{subsec:shmem_device_team_world}
+
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is a predefined team of type
+\CTYPE{shmem\_team\_t} that contains all \acp{PE} in the \openshmem program that
+have a valid PE-to-GPU association. \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is a
+separate predefined team from \CONST{SHMEM\_TEAM\_WORLD}. Because all \acp{PE}
+are required to have a valid PE-to-GPU association (see
+\cref{subsec:pe_gpu_association}), the set of member \acp{PE} in
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is the same as the set of member \acp{PE} in
+\CONST{SHMEM\_TEAM\_WORLD}.
+
+\subsubsection{SHMEM\_DEVICE\_TEAM\_SHARED}\label{subsec:shmem_device_team_shared}
+
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} is a predefined team of type
+\CTYPE{shmem\_team\_t} that corresponds to the set of \acp{PE} that share a
+\ac{GPU} memory domain. \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} refers to the team
+of all \acp{PE} that would mutually return a non-null address from a call to
+\FUNC{shmem\_ptr} or \FUNC{shmem\_team\_ptr} for all \ac{GPU} symmetric heap
+objects. That is, \FUNC{shmem\_ptr} and \FUNC{shmem\_team\_ptr} must return a
+non-null pointer to the local \ac{PE} for all \ac{GPU} symmetric heap objects on
+all target \acp{PE} in the team. This means that \ac{GPU} symmetric heap objects
+on each \ac{PE} are directly load/store accessible by all \acp{PE} in the team.
+
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} may or may not correspond to the same set of
+\acp{PE} as \CONST{SHMEM\_TEAM\_SHARED}. The membership of
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} depends on the \ac{GPU} memory topology,
+which may differ from the CPU memory topology that determines
+\CONST{SHMEM\_TEAM\_SHARED}.
+
+\subsection{Atomicity Domains}\label{subsec:atomicity_domains}
+
+The \openshmem specification defines an atomicity domain as a set of
+communication contexts whose associated teams are all split by (possibly
+recursive) calls to a \FUNC{shmem\_team\_split\_*} routine from a common
+predefined team. The \openshmem specification defines two predefined teams,
+\CONST{SHMEM\_TEAM\_WORLD} and \CONST{SHMEM\_TEAM\_SHARED}, each forming a
+separate atomicity domain.
+
+Two additional predefined teams, \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, each form a separate atomicity domain.
+These device atomicity domains are independent of each other and independent of
+the atomicity domains rooted at \CONST{SHMEM\_TEAM\_WORLD} and
+\CONST{SHMEM\_TEAM\_SHARED}.
+
+\textbf{Warning:} Atomic operations that use communication contexts in different
+atomicity domains to access the same location concurrently result in
+\textbf{undefined behavior}, as specified in the \openshmem specification. This
+applies equally to contexts derived from device teams. For example, concurrent
+atomic operations on the same location using a context derived from
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and a context derived from
+\CONST{SHMEM\_TEAM\_WORLD} result in undefined behavior.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 7: Context Management
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Context Management}\label{sec:context_management}
+
+The \openshmem specification defines communication contexts as objects that allow
+the caller to manage the ordering and completion of communication operations.
+The context model is extended to support GPU-centric operations. Device contexts
+are created using the existing \FUNC{shmem\_ctx\_create} and
+\FUNC{shmem\_team\_create\_ctx} routines with the \CONST{SHMEM\_DEVICE\_CTX}
+option.
+
+\subsection{Default Device Context}\label{subsec:default_device_ctx}
+
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
+type \CTYPE{shmem\_ctx\_t} that serves as the default context for all GPU-centric
+operations. All GPU-centric communication operations and synchronizations that
+do not specify a context shall be performed on
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. The default device context is associated
+with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
+
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be passed to
+\FUNC{shmem\_ctx\_destroy}.
+
+\subsection{Context Separation}\label{subsec:context_separation}
+
+Communication contexts are not shared between GPU-aware and GPU-centric
+operations.
+
+\begin{longtable}{|p{3cm}|p{5cm}|p{6cm}|}
+\hline
+\textbf{Context Type} & \textbf{Created With} & \textbf{Use For} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Context Type} & \textbf{Created With} & \textbf{Use For} \\
+\hline
+\endhead
+Device context & \CONST{SHMEM\_DEVICE\_CTX} option & GPU-centric operations (from GPU kernels) \\
+\hline
+Host context & Without \CONST{SHMEM\_DEVICE\_CTX} (incl.\ \CONST{SHMEM\_CTX\_DEFAULT}) & GPU-aware or host-side operations \\
+\hline
+\end{longtable}
+
+\textbf{Warning:} Using a device context for GPU-aware operations or a
+non-device context for GPU-centric operations results in \textbf{undefined
+behavior}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 8: Language Bindings and Conformance
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Language Bindings and Conformance}\label{sec:bindings}
+
+ISO C language bindings are provided. An implementation that provides C bindings
+for the interfaces defined herein may claim conformance to this auxiliary
+specification.
+
+The header file \HEADER{shmemg.h} shall contain the interfaces, types, and
+constant names defined herein. An \openshmem program that uses the GPU extensions
+shall include \HEADER{shmemg.h} in addition to \HEADER{shmem.h}.
+
+API routines use the \texttt{shmemg\_} prefix. An \openshmem program should
+avoid defining routine names, variables, or other identifiers with the prefix
+\texttt{shmemg} using any combination of uppercase letters, lowercase letters,
+and underscores.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 9: Compatibility
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Compatibility}\label{sec:compatibility}
+
+The extensions are backward compatible with \openshmem 1.6. Applications that do
+not use GPU-attached memory or the interfaces defined herein shall execute
+correctly and without observable change in behavior. The \ac{GPU} symmetric heap
+does not alter the behavior of existing routines when operating on CPU-attached
+memory from the default symmetric heap.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 10: Library Constants
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Library Constants}\label{sec:library_constants}
+
+The \openshmem GPU specification provides a set of compile-time constants that
+may be used to specify options to \ac{API} routines or provide
+implementation-specific parameters. These constants supplement the constants
+defined by the \openshmem 1.6 specification.
+
+\begin{longtable}{|p{5.5cm}|p{9cm}|}
+\hline
+\textbf{Constant} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Constant} & \textbf{Description} \\
+\hline
+\endhead
+\LibConstRef{SHMEM\_DEVICE\_HOST\_INIT} &
+Option to \FUNC{shmem\_init\_thread} that requests GPU-aware communication
+support. When this option is provided, the implementation shall establish the
+PE-to-GPU association and prepare the runtime for GPU-aware operations on the
+\ac{GPU} symmetric heap. An implementation may support
+\CONST{SHMEM\_DEVICE\_HOST\_INIT}, \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or
+neither. \\
+\hline
+\LibConstRef{SHMEM\_DEVICE\_KERNEL\_INIT} &
+Option to \FUNC{shmem\_init\_thread} that requests GPU-centric communication
+support. When this option is provided, the implementation shall prepare the
+runtime for communication operations invoked from within GPU kernels. An
+implementation may support \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or neither. \\
+\hline
+\LibConstRef{SHMEM\_DEVICE\_CTX} &
+Context creation option that specifies the communication context shall support
+GPU-centric operations. A context created with this option may be used from
+within \ac{GPU} execution contexts. Contexts created with
+\CONST{SHMEM\_DEVICE\_CTX} shall not be used for GPU-aware operations, and
+contexts created without this option shall not be used for GPU-centric
+operations. This option may be combined with other context creation options
+defined in \openshmem 1.6, such as \CONST{SHMEM\_CTX\_SERIALIZED} or
+\CONST{SHMEM\_CTX\_PRIVATE}. \\
+\hline
+\LibConstRef{SHMEM\_DEVICE\_MALLOC\_HOST\_INIT} &
+Hint to \FUNC{shmem\_malloc\_with\_hints} that specifies the allocated memory
+from the \ac{GPU} symmetric heap will be used primarily by GPU-aware
+communication operations. The implementation may use this hint to optimize
+performance; if it cannot, the behavior shall be the same as an allocation
+without this hint. \\
+\hline
+\LibConstRef{SHMEM\_DEVICE\_MALLOC\_KERNEL\_INIT} &
+Hint to \FUNC{shmem\_malloc\_with\_hints} that specifies the allocated memory
+from the \ac{GPU} symmetric heap will be used primarily by GPU-centric
+communication operations invoked from within GPU kernels. The implementation may
+use this hint to optimize performance; if it cannot, the behavior shall be the
+same as an allocation without this hint. \\
+\hline
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 11: Library Handles
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Library Handles}\label{sec:library_handles}
+
+The \openshmem GPU specification provides a set of predefined named constant
+handles. All named constants may be used in initialization expressions or
+assignments. These handles supplement the handles defined by the \openshmem 1.6
+specification.
+
+\begin{longtable}{|p{5.5cm}|p{9cm}|}
+\hline
+\textbf{Handle} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Handle} & \textbf{Description} \\
+\hline
+\endhead
+\LibHandleRef{SHMEM\_DEVICE\_TEAM\_WORLD} &
+Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team containing all
+\acp{PE} in the \openshmem program that have a valid PE-to-GPU association.
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} shall be a subset of or equal to
+\CONST{SHMEM\_TEAM\_WORLD}. This handle may be used in collective operations and
+team-based communication routines that operate on the \ac{GPU} symmetric heap. \\
+\hline
+\LibHandleRef{SHMEM\_DEVICE\_TEAM\_SHARED} &
+Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team of \acp{PE}
+that share a \ac{GPU} memory domain. \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} may or
+may not correspond to the same set of \acp{PE} as \CONST{SHMEM\_TEAM\_SHARED}. \\
+\hline
+\LibHandleRef{SHMEM\_DEVICE\_CTX\_DEFAULT} &
+Handle of type \CTYPE{shmem\_ctx\_t} that corresponds to the default
+communication context for GPU-centric operations. All GPU-centric communication
+operations and synchronizations that do not specify a context shall be performed
+on this default device context. \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be
+used for GPU-aware operations. \\
+\hline
+\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 12: Environment Variables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Environment Variables}\label{sec:environment_variables}
+
+The \openshmem GPU specification provides a set of environment variables that
+allows users to configure GPU-related aspects of the \openshmem implementation.
+These variables supplement the environment variables defined by the \openshmem
+1.6 specification. Implementations are free to define additional GPU-related
+environment variables.
+
+\begin{longtable}{|p{4.5cm}|p{3cm}|p{7cm}|}
+\hline
+\textbf{Variable} & \textbf{Value} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Variable} & \textbf{Value} & \textbf{Description} \\
+\hline
+\endhead
+\EnvVarRef{SHMEM\_DEVICE\_SYMMETRIC\_SIZE} &
+Non-negative integer or floating-point with optional suffix &
+Specifies the size (in bytes) of the \ac{GPU} symmetric heap per \ac{PE}. The
+\ac{GPU} symmetric heap is allocated from GPU-attached memory on the \ac{GPU}
+selected by the \ac{PE} prior to library initialization. The allowed character
+suffixes are: \textbf{k} or \textbf{K} ($2^{10}$), \textbf{m} or \textbf{M}
+($2^{20}$), \textbf{g} or \textbf{G} ($2^{30}$), \textbf{t} or \textbf{T}
+($2^{40}$). For example, the string ``20m'' is equivalent to 20971520 bytes. An
+invalid value is an error. \\
+\hline
+\EnvVarRef{SHMEM\_DEVICE\_MAX\_CTX} &
+Non-negative integer &
+Specifies the maximum number of device communication contexts that may be
+created per \ac{PE}. The implementation shall support at least the specified
+number of device contexts. If the value is zero, the implementation may limit
+device-initiated communication to the default device context
+(\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}). An invalid value is an error. \\
+\hline
+\end{longtable}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 13: Initialization and Memory Management
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Initialization and Memory Management}\label{sec:init_memmgmt}
+
+The routines in this section provide initialization, memory management, and
+query operations on the \ac{GPU} symmetric heap.
+
+\textbf{Prerequisite:} Except for \FUNC{shmem\_init\_thread}, all routines in
+this and subsequent sections require that the \openshmem library has been
+initialized with GPU support by passing \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, or both to \FUNC{shmem\_init\_thread}, and
+that the corresponding capability was returned in \VAR{provided}. Calling any
+\texttt{shmemg\_} routine without the required GPU initialization results in
+\textbf{undefined behavior}.
+
+\subsection{SHMEM\_INIT\_THREAD}\label{subsec:shmem_init_thread}
+
+Initializes the \openshmem library with support for the requested thread level
+and \ac{GPU} communication capabilities.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+int shmem_init_thread(int requested, int *provided);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{requested}{The thread level and GPU support requested by the
+application. The value is a bitwise OR of a thread level constant and zero or
+more GPU support constants.}
+\apiargument{OUT}{provided}{The thread level and GPU support provided by the
+implementation.}
+\end{apiarguments}
+
+\apidescription{
+The thread level portion of \VAR{requested} and \VAR{provided} shall be one of
+\CONST{SHMEM\_THREAD\_SINGLE}, \CONST{SHMEM\_THREAD\_FUNNELED},
+\CONST{SHMEM\_THREAD\_SERIALIZED}, or \CONST{SHMEM\_THREAD\_MULTIPLE}, as
+defined in \openshmem 1.6.
+
+The GPU support portion of \VAR{requested} and \VAR{provided} may include one or
+both of the following constants, combined with the thread level using bitwise OR:
+\begin{itemize}
+\item \CONST{SHMEM\_DEVICE\_HOST\_INIT} --- requests GPU-aware communication support
+\item \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} --- requests GPU-centric communication support
+\end{itemize}
+
+\FUNC{shmem\_init\_thread} is extended to accept GPU support options in the
+\VAR{requested} argument. When \CONST{SHMEM\_DEVICE\_HOST\_INIT} is included in
+\VAR{requested}, the implementation shall establish the PE-to-GPU association and
+initialize the \ac{GPU} symmetric heap for GPU-aware communication. When
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is included, the implementation shall
+additionally prepare the runtime for GPU-centric communication operations
+invoked from within GPU kernels.
+
+The \VAR{provided} argument returns the thread level and GPU support actually
+provided by the implementation. The GPU support bits in \VAR{provided} shall
+reflect only the capabilities that the implementation has successfully
+initialized. An implementation may provide a subset of the requested GPU support.
+
+If no GPU support constants are included in \VAR{requested}, the behavior of
+\FUNC{shmem\_init\_thread} is unchanged from \openshmem 1.6.
+
+The application shall select the \ac{GPU} for association with the \ac{PE} prior
+to calling \FUNC{shmem\_init\_thread}. The implementation shall use the \ac{GPU}
+that has been made current by the execution environment at the time of the call.
+
+All \acp{PE} shall provide the same GPU support constants in \VAR{requested}. If
+differing values are used, the behavior is undefined.
+}
+
+\apireturnvalues{
+\FUNC{shmem\_init\_thread} returns 0 upon success; otherwise, it returns a
+nonzero value.
+}
+
+\apinotes{
+The application should compare the GPU support bits in \VAR{provided} against the
+requested bits to determine whether the desired GPU capabilities are available:
+\begin{itemize}
+\item If \CONST{SHMEM\_DEVICE\_HOST\_INIT} is \textbf{not} set in
+  \VAR{provided} --- do not use GPU-attached memory buffers in \openshmem
+  operations
+\item If \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is \textbf{not} set in
+  \VAR{provided} --- do not invoke \openshmem routines from GPU kernels
+\end{itemize}
+}
+\end{apidefinition}
+
+\subsection{Memory Management}\label{subsec:gpu_memmgmt}
+
+\subsubsection{SHMEMG\_MALLOC}\label{subsec:shmemg_malloc}
+
+Collectively allocate a block of memory from the \ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void *shmemg_malloc(size_t size);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{size}{The size, in bytes, of a block to be allocated from the
+\ac{GPU} symmetric heap.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_malloc} routine is a collective operation on the world team
+that returns the symmetric address of a block of at least \VAR{size} bytes from
+the \ac{GPU} symmetric heap. The returned address shall be suitably aligned so
+that it may be assigned to a pointer to any type of object. The allocated memory
+resides in GPU-attached memory on the \ac{GPU} associated with the calling
+\ac{PE}.
+
+When \VAR{size} is zero, the routine performs no action and returns a null
+pointer. Otherwise, \FUNC{shmemg\_malloc} calls a procedure that is semantically
+equivalent to \FUNC{shmem\_barrier\_all} on exit. This ensures that all \acp{PE}
+participate in the memory allocation, and that the memory on other \acp{PE} can
+be used as soon as the local \ac{PE} returns.
+
+The value of the \VAR{size} argument must be identical on all \acp{PE};
+otherwise, the behavior is undefined.
+}
+
+\apireturnvalues{
+\FUNC{shmemg\_malloc} returns the symmetric address of the allocated space;
+otherwise, it returns a null pointer.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_CALLOC}\label{subsec:shmemg_calloc}
+
+Collectively allocate a zeroed block of memory from the \ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void *shmemg_calloc(size_t count, size_t size);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{count}{The number of elements to allocate.}
+\apiargument{IN}{size}{The size, in bytes, of each element to allocate.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_calloc} routine is a collective operation on the world team
+that allocates a region of remotely accessible memory from the \ac{GPU} symmetric
+heap for an array of \VAR{count} objects of \VAR{size} bytes each. The returned
+pointer refers to the lowest byte address of the allocated memory. The space is
+initialized to all bits zero. The allocated memory resides in GPU-attached memory
+on the \ac{GPU} associated with the calling \ac{PE}.
+
+If the allocation succeeds, the returned pointer shall be suitably aligned so
+that it may be assigned to a pointer to any type of object. If the allocation
+does not succeed, or either \VAR{count} or \VAR{size} is 0, the return value is
+a null pointer.
+
+The values of \VAR{count} and \VAR{size} shall each be equal across all
+\acp{PE}; otherwise, the behavior is undefined.
+
+When \VAR{count} or \VAR{size} is 0, the routine returns without performing a
+barrier. Otherwise, \FUNC{shmemg\_calloc} calls a procedure that is semantically
+equivalent to \FUNC{shmem\_barrier\_all} on exit.
+}
+
+\apireturnvalues{
+\FUNC{shmemg\_calloc} returns a pointer to the lowest byte address of the
+allocated space; otherwise, it returns a null pointer.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_ALIGN}\label{subsec:shmemg_align}
+
+Collectively allocate a block of memory with a specified alignment from the
+\ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void *shmemg_align(size_t alignment, size_t size);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{alignment}{Byte alignment of the block allocated from the
+\ac{GPU} symmetric heap.}
+\apiargument{IN}{size}{The size, in bytes, of a block to be allocated from the
+\ac{GPU} symmetric heap.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_align} routine is a collective operation on the world team that
+allocates a block from the \ac{GPU} symmetric heap with a byte alignment
+specified by the \VAR{alignment} argument. The value of \VAR{alignment} shall be
+a multiple of \texttt{sizeof(void *)} that is also a power of two; otherwise, the
+behavior is undefined. The allocated memory resides in GPU-attached memory on the
+\ac{GPU} associated with the calling \ac{PE}.
+
+When \VAR{size} is zero, the routine performs no action and returns a null
+pointer. Otherwise, \FUNC{shmemg\_align} calls a procedure that is semantically
+equivalent to \FUNC{shmem\_barrier\_all} on exit.
+
+The values of \VAR{alignment} and \VAR{size} must be identical on all \acp{PE};
+otherwise, the behavior is undefined.
+}
+
+\apireturnvalues{
+\FUNC{shmemg\_align} returns an aligned symmetric address whose value is a
+multiple of \VAR{alignment}; otherwise, it returns a null pointer.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_FREE}\label{subsec:shmemg_free}
+
+Collectively deallocate memory from the \ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void shmemg_free(void *ptr);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ptr}{Symmetric address of an object in the \ac{GPU} symmetric
+heap.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_free} routine is a collective operation on the world team that
+deallocates the block to which \VAR{ptr} points, making it available for further
+allocation. If \VAR{ptr} is a null pointer, no action is performed; otherwise,
+\FUNC{shmemg\_free} calls a procedure that is semantically equivalent to
+\FUNC{shmem\_barrier\_all} on entry.
+
+It is the application's responsibility to ensure that no communication operations
+involving the given memory block are pending on any communication context prior
+to calling \FUNC{shmemg\_free}.
+
+The value of \VAR{ptr} must be identical on all \acp{PE}; otherwise, the
+behavior is undefined.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 14: GPU-Aware Communication
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{GPU-Aware Communication}\label{sec:gpu_aware}
+
+The \openshmem \ac{RMA}, \ac{AMO}, signaling, and collective routines defined in
+\openshmem 1.6 may be used with GPU-attached memory buffers as operands. The
+routine interfaces are unchanged. The tables below specify the allowed memory
+locations for each argument.
+
+The operations in this section are invoked from the host \ac{PE}. The \openshmem
+library shall have been initialized with \CONST{SHMEM\_DEVICE\_HOST\_INIT} and
+the corresponding capability shall have been returned in the \VAR{provided}
+argument of \FUNC{shmem\_init\_thread}.
+
+The following terms identify the memory locations referenced in this section:
+
+\begin{longtable}{|p{4cm}|p{10.5cm}|}
+\hline
+\textbf{Term} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Term} & \textbf{Description} \\
+\hline
+\endhead
+Default symmetric heap & Memory allocated by \FUNC{shmem\_malloc},
+\FUNC{shmem\_calloc}, \FUNC{shmem\_align}, or \FUNC{shmem\_malloc\_with\_hints}
+from the default (CPU-attached) symmetric heap. \\
+\hline
+GPU symmetric heap & Memory allocated by \FUNC{shmemg\_malloc},
+\FUNC{shmemg\_calloc}, or \FUNC{shmemg\_align} from the \ac{GPU} symmetric heap. \\
+\hline
+Static/global data & Symmetric data objects defined with static or global storage
+duration. \\
+\hline
+Local CPU memory & Private (non-symmetric) CPU-attached memory, including stack,
+heap, and data segments. \\
+\hline
+Local GPU memory & Private (non-symmetric) GPU-attached memory, including GPU
+memory allocated by the GPU runtime (e.g., \texttt{cudaMalloc},
+\texttt{hipMalloc}) that is not part of the \ac{GPU} symmetric heap. \\
+\hline
+\end{longtable}
+
+\subsection{Remote Memory Access (RMA)}\label{subsec:gpu_aware_rma}
+
+The \ac{RMA} routines defined in \openshmem 1.6 transfer data between a local
+data object and a symmetric data object on a remote \ac{PE}. The tables below
+specify the allowed memory locations for source and destination arguments.
+
+\subsubsection{Blocking Put}\label{subsec:ga_blocking_put}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Scalar Put}\label{subsec:ga_scalar_put}
+
+Copies one data item to a remote \ac{PE}. The \VAR{value} argument is passed by
+value; no memory location restriction applies.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Strided Put}\label{subsec:ga_strided_put}
+
+Copies strided data to a specified \ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Nonblocking Put}\label{subsec:ga_nbi_put}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{source} data object shall not be modified until the operation has been
+completed by a call to \FUNC{shmem\_quiet} or \FUNC{shmem\_pe\_quiet}, as
+specified in \openshmem 1.6.
+
+\subsubsection{Blocking Get}\label{subsec:ga_blocking_get}
+
+Copies data from a specified \ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Scalar Get}\label{subsec:ga_scalar_get}
+
+Copies one data item from a remote \ac{PE}. The return value is passed by value;
+no memory location restriction applies.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Strided Get}\label{subsec:ga_strided_get}
+
+Copies strided data from a specified \ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Nonblocking Get}\label{subsec:ga_nbi_get}
+
+Copies data from a contiguous remote data object on the specified \ac{PE} to the
+local data object.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{dest} data object shall not be accessed until the operation has been
+completed by a call to \FUNC{shmem\_quiet} or \FUNC{shmem\_pe\_quiet}, as
+specified in \openshmem 1.6.
+
+\subsection{Atomic Memory Operations (AMO)}\label{subsec:gpu_aware_amo}
+
+An \ac{AMO} is a one-sided communication mechanism that combines memory read,
+update, or write operations with atomicity guarantees. The \acp{AMO} are
+performed only on symmetric objects. Two types of \ac{AMO} routines are defined:
+fetching routines, which return the original value of the remote data object, and
+non-fetching routines, which update the remote data object without returning a
+value.
+
+The \VAR{value}, \VAR{cond}, and \VAR{cmp\_value} arguments are passed by value;
+no memory location restriction applies.
+
+\subsubsection{Non-fetching AMOs}\label{subsec:ga_nonfetch_amo}
+
+Atomically update a remote data object.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Fetching AMOs}\label{subsec:ga_fetch_amo}
+
+Atomically fetch or update a remote data object and return the prior value.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} or \VAR{source} & IN/OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The return value is passed by value; no memory location restriction applies.
+
+\subsubsection{Nonblocking AMOs}\label{subsec:ga_nbi_amo}
+
+The nonblocking \ac{AMO} routines atomically fetch or update a remote data object
+without waiting for the operation to complete.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} or \VAR{source} & IN/OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{fetch} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{fetch} data object shall not be accessed until the operation has been
+completed by a call to \FUNC{shmem\_quiet}, as specified in \openshmem 1.6.
+
+\subsection{Signaling Operations}\label{subsec:gpu_aware_signaling}
+
+The put-with-signal routines provide a method for copying data from a contiguous
+local data object to a data object on a specified \ac{PE} and subsequently
+updating a remote flag to signal completion. The signal-fetch routine provides a
+method for reading the signal object.
+
+\subsubsection{Put-with-Signal}\label{subsec:ga_put_signal}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently update a remote flag to signal completion.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{sig\_addr} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{signal} and \VAR{sig\_op} arguments are passed by value; no memory
+location restriction applies.
+
+\subsubsection{Nonblocking Put-with-Signal}\label{subsec:ga_put_signal_nbi}
+
+Copies data from a contiguous local data
+object to a data object on a specified \ac{PE} and subsequently update a remote
+flag to signal completion.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{sig\_addr} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{source} data object shall not be modified until the operation has been
+completed by a call to \FUNC{shmem\_quiet}, as specified in \openshmem 1.6.
+
+\subsubsection{Signal Fetch}\label{subsec:ga_signal_fetch}
+
+Fetches the signal update on a local data object.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{sig\_addr} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsection{Point-to-Point Synchronization}\label{subsec:gpu_aware_p2p}
+
+The point-to-point synchronization routines provide a mechanism for
+synchronization between two \acp{PE} based on the value of a symmetric data
+object.
+
+\subsubsection{Wait-Until}\label{subsec:ga_wait_until}
+
+Wait for a variable on the local \ac{PE} to change.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivar} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
+
+\subsubsection{Wait-Until (Array Variants)}\label{subsec:ga_wait_until_array}
+
+Wait on an array of variables on the local \ac{PE} until the specified wait
+condition is met.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivars} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{status} & IN & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\VAR{indices} & OUT & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{status} and \VAR{indices} arguments shall reside in CPU-attached memory;
+using GPU-attached memory for these arguments results in undefined behavior.
+
+\subsubsection{Test}\label{subsec:ga_test}
+
+Indicate whether a variable on the local \ac{PE} meets a specified test
+condition.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivar} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Test (Array Variants)}\label{subsec:ga_test_array}
+
+Indicate whether variables within an array on the local \ac{PE} meet a specified
+test condition.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivars} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{status} & IN & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\VAR{indices} & OUT & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{status} and \VAR{indices} arguments shall reside in CPU-attached memory;
+using GPU-attached memory for these arguments results in undefined behavior.
+
+\subsubsection{Signal-Wait-Until}\label{subsec:ga_signal_wait_until}
+
+Wait for a variable on the local \ac{PE} to change from a signaling operation.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{sig\_addr} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
+
+\subsection{Memory Ordering}\label{subsec:gpu_aware_ordering}
+
+\subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
+
+Ensures ordering of delivery of put, \ac{AMO}, memory store, and put-with-signal
+operations on symmetric data objects when GPU-aware communication is enabled.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void shmem_fence(void);
+void shmem_ctx_fence(shmem_ctx_t ctx);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle specifying the context on which to perform
+the operation. When this argument is not provided, the operation is performed on
+the default context.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmem\_fence} routine ensures ordering of delivery of put, \ac{AMO},
+memory store, and put-with-signal operations on symmetric data objects. All such
+operations on symmetric data objects issued to a particular \ac{PE} on the given
+context prior to the call to \FUNC{shmem\_fence} are guaranteed to be delivered
+before any subsequent such operations to the same \ac{PE} on the same context.
+\FUNC{shmem\_fence} guarantees order of delivery, not completion. It does not
+guarantee order of delivery of nonblocking get or values fetched by nonblocking
+\ac{AMO} routines.
+
+Memory store operations include direct stores to symmetric data objects performed
+through local pointers returned by \FUNC{shmem\_ptr} or
+\FUNC{shmem\_team\_ptr}. When the target symmetric data object resides in the
+\ac{GPU} symmetric heap, a direct store through such a pointer constitutes a
+memory store to the \ac{GPU} symmetric heap.
+
+When GPU-aware communication is enabled, \FUNC{shmem\_fence} retains the
+per-target-PE ordering semantics defined in \openshmem 1.6. However, when two
+operations issued by the same \ac{PE} target different memory domains on the same
+target \ac{PE}, \FUNC{shmem\_fence} does not provide cross-domain visibility
+guarantees.
+
+If \VAR{ctx} has the value \CONST{SHMEM\_CTX\_INVALID}, no operation is
+performed.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+\FUNC{shmem\_fence} only provides per-PE ordering guarantees and does not
+guarantee completion of delivery. When GPU-aware communication is in use,
+\FUNC{shmem\_fence} is sufficient to order operations that target the same memory
+domain on the same \ac{PE}. It is not sufficient to guarantee visibility when two
+operations target different memory domains on the same \ac{PE}.
+
+The \FUNC{shmem\_quiet} routine should be called if completion of put, \ac{AMO},
+memory store, or put-with-signal operations on symmetric data objects is desired
+when operations target different memory domains or when multiple target \acp{PE}
+are involved.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEM\_QUIET}\label{subsec:ga_shmem_quiet}
+
+Waits for completion of all outstanding put, \ac{AMO}, memory store, and
+put-with-signal operations on symmetric data objects issued by a \ac{PE} when
+GPU-aware communication is enabled.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void shmem_quiet(void);
+void shmem_ctx_quiet(shmem_ctx_t ctx);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle specifying the context on which to perform
+the operation. When this argument is not provided, the operation is performed on
+the default context.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmem\_quiet} routine ensures completion of all outstanding put,
+\ac{AMO}, memory store, and put-with-signal operations on symmetric data objects
+issued by the calling \ac{PE} on the given context. All such operations are
+guaranteed to be complete and visible to all \acp{PE} when \FUNC{shmem\_quiet}
+returns.
+
+When GPU-aware communication is enabled, \FUNC{shmem\_quiet} ensures completion
+and visibility of all prior operations to both the default symmetric heap and the
+\ac{GPU} symmetric heap at their respective targets. The receiving \ac{PE} shall
+perform appropriate host-device synchronization after observing data that
+indicates completion before accessing data from a prior operation that resides in
+GPU-attached memory.
+
+If \VAR{ctx} has the value \CONST{SHMEM\_CTX\_INVALID}, no operation is
+performed.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+There is a subtle difference between \FUNC{shmem\_fence} and
+\FUNC{shmem\_quiet}, in that \FUNC{shmem\_quiet} guarantees completion of all
+operations on symmetric data objects which makes the updates visible to all other
+\acp{PE} across all memory domains, including the \ac{GPU} symmetric heap and the
+default symmetric heap. \FUNC{shmem\_fence} provides only per-PE ordering within
+a single memory domain and does not guarantee cross-domain visibility.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEM\_PUT\_SIGNAL (Cross-Domain Ordering)}\label{subsec:ga_put_signal_ordering}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently updates a remote flag to signal completion. The
+put-with-signal routines guarantee ordering between the data delivery and the
+signal update within a single operation, including when the data and the signal
+target different memory domains.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void shmem_put_signal(TYPE *dest, const TYPE *source, size_t nelems,
+    uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
+void shmem_ctx_put_signal(shmem_ctx_t ctx, TYPE *dest, const TYPE *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle specifying the context on which to perform
+the operation.}
+\apiargument{OUT}{dest}{Symmetric address of the data object to be updated on the
+remote PE.}
+\apiargument{IN}{source}{Local address of the data object containing the data to
+be copied.}
+\apiargument{IN}{nelems}{Number of elements in the \VAR{dest} and \VAR{source}
+arrays.}
+\apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object to be
+updated on the remote PE as a signal.}
+\apiargument{IN}{signal}{Unsigned 64-bit value used for updating the remote
+\VAR{sig\_addr}.}
+\apiargument{IN}{sig\_op}{Signal operator for the update on \VAR{sig\_addr}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+When GPU-aware communication is enabled, the \VAR{dest} data object and the
+\VAR{sig\_addr} signal data object may reside in different memory domains on the
+same target \ac{PE}. The \VAR{dest} data object may reside in the \ac{GPU}
+symmetric heap and the \VAR{sig\_addr} signal data object may reside in the
+default symmetric heap, or the reverse. The put-with-signal routine guarantees
+that the data is delivered to the \VAR{dest} data object before the signal update
+is visible at the \VAR{sig\_addr} signal data object, regardless of whether the
+two objects reside in the same or different memory domains.
+
+This cross-domain ordering guarantee is specific to the put-with-signal routine.
+It does not extend to ordering between a put-with-signal routine and other
+independent operations.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+Unlike the case where two independent operations target different memory domains,
+the put-with-signal routine provides cross-domain ordering between its data
+delivery and signal update as a single atomic-like operation.
+\FUNC{shmem\_fence} does not provide equivalent cross-domain ordering for two
+independent operations.
+}
+\end{apidefinition}
+
+\subsubsection{Global Synchronization}\label{subsec:ga_barrier}
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void shmem_barrier_all(void);
+void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{PE\_start}{The lowest PE number of the active set of PEs.}
+\apiargument{IN}{logPE\_stride}{The log (base 2) of the stride between
+consecutive PE numbers in the active set.}
+\apiargument{IN}{PE\_size}{The number of PEs in the active set.}
+\apiargument{IN}{pSync}{Symmetric address of a work array of size at least
+\CONST{SHMEM\_BARRIER\_SYNC\_SIZE}.}
+\end{apiarguments}
+
+\apidescription{
+When GPU-aware communication is enabled, the implicit completion semantics of
+\FUNC{shmem\_barrier\_all} and \FUNC{shmem\_barrier} are equivalent to calling
+\FUNC{shmem\_quiet} on the default context prior to synchronization. All prior
+operations to both the default symmetric heap and the \ac{GPU} symmetric heap are
+guaranteed to be complete and visible to all \acp{PE} when the barrier returns,
+regardless of whether the operations target different memory domains or different
+\acp{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+The \FUNC{shmem\_barrier\_all} routine is equivalent to calling
+\FUNC{shmem\_ctx\_quiet} on the default context followed by calling
+\FUNC{shmem\_team\_sync} on the world team.
+
+The \FUNC{shmem\_team\_sync} routine, in contrast with the barrier routines, only
+ensures completion and visibility of previously issued memory stores and does not
+ensure completion of remote memory updates issued through \openshmem routines.
+}
+\end{apidefinition}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 15: GPU-Centric Communication
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{GPU-Centric Communication}\label{sec:gpu_centric}
+
+This section defines routines that shall be invoked from within \ac{GPU} device
+kernels. These routines shall not be called from the host.
+
+The \openshmem library shall have been initialized with
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} and the corresponding capability shall have
+been returned in the \VAR{provided} argument of \FUNC{shmem\_init\_thread}.
+Calling any routine in this section without the required initialization results
+in \textbf{undefined behavior}.
+
+All routines in this section use the \texttt{shmemg\_} prefix and operate on
+symmetric data objects allocated from the \ac{GPU} symmetric heap. A symmetric
+address and a target \ac{PE} identifier are used to address remote data objects.
+Unless otherwise noted, any \ac{GPU} thread within a device kernel may call these
+routines.
+
+\subsection{Library Setup and Query}\label{subsec:gc_setup}
+
+\subsubsection{SHMEMG\_MY\_PE}\label{subsec:shmemg_my_pe}
+
+Returns the \ac{PE} number of the calling \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ int shmemg_my_pe(void);
+\end{Csynopsis}
+
+\begin{apiarguments}
+None.
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_my\_pe} routine returns the \ac{PE} number of the calling
+\ac{PE}. The value is an integer between 0 and \texttt{npes - 1}, where
+\texttt{npes} is the total number of \acp{PE} in the program. The returned value
+is identical to the value returned by \FUNC{shmem\_my\_pe} on the host for the
+same \ac{PE}.
+}
+
+\apireturnvalues{
+Integer --- between 0 and \texttt{npes - 1}.
+}
+
+\apinotes{
+All threads within a kernel launched by the same \ac{PE} shall observe the same
+return value.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_N\_PES}\label{subsec:shmemg_n_pes}
+
+Returns the number of \acp{PE} in the \openshmem program.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ int shmemg_n_pes(void);
+\end{Csynopsis}
+
+\begin{apiarguments}
+None.
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_n\_pes} routine returns the total number of \acp{PE} in the
+\openshmem program. The returned value is identical to the value returned by
+\FUNC{shmem\_n\_pes} on the host.
+}
+
+\apireturnvalues{
+Integer --- total number of \acp{PE} in the program.
+}
+
+\apinotes{
+All threads within a kernel launched by the same \ac{PE} shall observe the same
+return value.
+}
+\end{apidefinition}
+
+\subsection{Context Management}\label{subsec:gc_context}
+
+Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
+or teams created from \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} through
+\FUNC{shmem\_team\_split\_strided} and \FUNC{shmem\_team\_split\_2d} routines
+are capable of performing GPU-centric communication operations from within
+\ac{GPU} kernels. Using a context associated with any other team for GPU-centric
+operations results in \textbf{undefined behavior}.
+
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
+type \CTYPE{shmem\_ctx\_t} associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
+All GPU-centric \ac{RMA} and \ac{AMO} operations that do not specify a context
+shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU} threads may
+pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable routine that
+accepts a context argument.
+
+Explicit device contexts are created on the host using
+\FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. The
+team argument shall be \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} or a team derived from
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. Once created, these contexts may be passed
+to device-callable routines from within \ac{GPU} kernels. Device contexts shall
+not be created or destroyed from within \ac{GPU} kernels.
+
+Using a device context for GPU-aware (host-initiated) operations, or using a
+non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for GPU-centric
+operations, results in \textbf{undefined behavior}.
+
+\subsection{Communication Operations}\label{subsec:gc_comm_ops}
+
+The source and destination buffers for all data movement operations and the
+symmetric data objects for all synchronization operations in this section shall
+reside in the \ac{GPU} symmetric heap. Using local \ac{GPU} memory, local CPU
+memory, or memory from the default symmetric heap as source, destination, or
+synchronization operands for GPU-centric communication operations results in
+\textbf{undefined behavior}.
+
+Each communication routine is provided at three thread granularities:
+
+\begin{longtable}{|p{3cm}|p{3cm}|p{8.5cm}|}
+\hline
+\textbf{Suffix} & \textbf{Granularity} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Suffix} & \textbf{Granularity} & \textbf{Description} \\
+\hline
+\endhead
+\emph{(none)} & Thread & A single \ac{GPU} thread initiates the operation. \\
+\hline
+\texttt{\_tg} & Thread group & All threads in a thread group collectively initiate
+the operation (e.g., a thread block or workgroup). \\
+\hline
+\texttt{\_htg} & Hardware thread group & All threads in a hardware thread group
+collectively initiate the operation (e.g., a warp or wavefront). \\
+\hline
+\end{longtable}
+
+The thread group (\texttt{\_tg}) and hardware thread group (\texttt{\_htg})
+variants are collective across the threads in the specified group. All
+participating threads shall call the routine with the same arguments. If any
+thread in the group does not participate, or if arguments differ across threads,
+the behavior is undefined.
+
+\subsubsection{Remote Memory Access (RMA)}\label{subsec:gc_rma}
+
+The \ac{RMA} routines in this section transfer data between a local data object
+and a symmetric data object on a remote \ac{PE}. The operations are one-sided:
+the initiating \ac{GPU} thread provides all communication parameters and the
+remote \ac{PE} need not participate.
+
+The \VAR{source} and \VAR{dest} data objects shall reside in the \ac{GPU}
+symmetric heap.
+
+\subsubsubsection{\textbf{Blocking Put}}\label{subsec:gc_put}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_putmem(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_putmem(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_putmem_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_putmem_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object.}
+\apiargument{IN}{source}{Local address of the data object containing the data to
+be copied. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with \VAR{ctx}, or \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines return after the data has been copied out of the \VAR{source} array
+on the local \ac{PE}. Delivery of data into the \VAR{dest} data object on the
+destination \ac{PE} may occur in any order. Two successive put routines may
+deliver data out of order unless a call to \FUNC{shmemg\_fence} is introduced
+between the two calls.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Put}}\label{subsec:gc_put_nbi}
+
+Initiates a nonblocking copy of data from a contiguous local data object to a
+data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_putmem_nbi(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_putmem_nbi(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_nbi_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_putmem_nbi_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_nbi_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_putmem_nbi_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object.}
+\apiargument{IN}{source}{Local address of the object containing the data to be
+copied. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines return after initiating the operation. The operation is considered
+complete after a subsequent call to \FUNC{shmemg\_quiet}. At the completion of
+\FUNC{shmemg\_quiet}, the data has been copied into the \VAR{dest} array on the
+destination \ac{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Blocking Get}}\label{subsec:gc_get}
+
+Copies a contiguous symmetric data object from a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_getmem(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_getmem(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_getmem_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_getmem_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_getmem_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_getmem_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Local address of the data object to be updated. Shall
+reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{source}{Symmetric address of the source data object.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines copy a contiguous symmetric data object from \ac{PE} \VAR{pe} to the
+local \VAR{dest} data object. The routines return after the data has been
+delivered to the \VAR{dest} array on the local \ac{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Get}}\label{subsec:gc_get_nbi}
+
+Initiates a nonblocking copy of a contiguous symmetric data object from a
+specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_getmem_nbi(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_getmem_nbi(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_getmem_nbi_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_getmem_nbi_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_getmem_nbi_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+__device__ void shmemg_ctx_getmem_nbi_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Local address of the data object to be updated. Shall
+reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{source}{Symmetric address of the source data object.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines initiate a copy of a contiguous symmetric data object from \ac{PE}
+\VAR{pe} to the local \VAR{dest} data object. The routines return after
+initiating the operation. The operation is considered complete after a subsequent
+call to \FUNC{shmemg\_quiet}. At the completion of \FUNC{shmemg\_quiet}, the
+data has been delivered to the \VAR{dest} array on the local \ac{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsection{Atomic Memory Operations (AMO)}\label{subsec:gc_amo}
+
+The \ac{AMO} routines in this section perform atomic read, update, or write
+operations on symmetric data objects in the \ac{GPU} symmetric heap. Two types
+are defined: non-fetching routines update the remote data object without
+returning a value, and fetching routines return the value of the remote data
+object prior to the update.
+
+The \VAR{dest} data object for all \ac{AMO} routines in this section shall reside
+in the \ac{GPU} symmetric heap. Using local \ac{GPU} memory, local CPU memory, or
+memory from the default symmetric heap as the \VAR{dest} operand results in
+\textbf{undefined behavior}.
+
+The \VAR{value}, \VAR{cond}, and \VAR{cmp\_value} arguments are passed by value;
+no memory location restriction applies.
+
+All \ac{AMO} routines operate at single-thread granularity. No thread group or
+hardware thread group variants are defined.
+
+\subsubsubsection{\textbf{Non-fetching AMOs}}\label{subsec:gc_nonfetch_amo}
+
+Atomically updates a symmetric data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_TYPENAME_atomic_set(TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_set(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_add(TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_add(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_inc(TYPE *dest, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_inc(shmem_ctx_t ctx,
+    TYPE *dest, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_and(TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_and(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_or(TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_or(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_xor(TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_xor(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the data object to be updated on the
+remote PE. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The operand to the atomic operation. Not used by
+\FUNC{shmemg\_atomic\_inc}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The non-fetching \ac{AMO} routines perform an atomic update to the data object at
+address \VAR{dest} on \ac{PE} \VAR{pe}. The operations are:
+
+\begin{longtable}{|p{5cm}|p{9.5cm}|}
+\hline
+\textbf{Routine} & \textbf{Operation} \\
+\hline
+\FUNC{shmemg\_atomic\_set} & Atomically sets the value at \VAR{dest} to \VAR{value}. \\
+\hline
+\FUNC{shmemg\_atomic\_add} & Atomically adds \VAR{value} to the value at \VAR{dest}. \\
+\hline
+\FUNC{shmemg\_atomic\_inc} & Atomically increments the value at \VAR{dest} by one. \\
+\hline
+\FUNC{shmemg\_atomic\_and} & Atomically performs a bitwise AND of \VAR{value} with the value at \VAR{dest}. \\
+\hline
+\FUNC{shmemg\_atomic\_or} & Atomically performs a bitwise OR of \VAR{value} with the value at \VAR{dest}. \\
+\hline
+\FUNC{shmemg\_atomic\_xor} & Atomically performs a bitwise XOR of \VAR{value} with the value at \VAR{dest}. \\
+\hline
+\end{longtable}
+
+The routines return after the atomic update has been issued. Two successive
+non-fetching \ac{AMO} routines may update the remote data object out of order
+unless a call to \FUNC{shmemg\_fence} is introduced between the two calls.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Fetching AMOs}}\label{subsec:gc_fetch_amo}
+
+Atomically fetches or updates a symmetric data object on a specified \ac{PE} and
+returns the prior value.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ TYPE shmemg_TYPENAME_atomic_fetch(const TYPE *source, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch(shmem_ctx_t ctx,
+    const TYPE *source, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_swap(TYPE *dest, TYPE value, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_swap(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_compare_swap(TYPE *dest,
+    TYPE cond, TYPE value, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_compare_swap(shmem_ctx_t ctx,
+    TYPE *dest, TYPE cond, TYPE value, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_fetch_add(TYPE *dest,
+    TYPE value, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_add(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_fetch_inc(TYPE *dest, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_inc(shmem_ctx_t ctx,
+    TYPE *dest, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_fetch_and(TYPE *dest,
+    TYPE value, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_and(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_fetch_or(TYPE *dest,
+    TYPE value, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_or(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+__device__ TYPE shmemg_TYPENAME_atomic_fetch_xor(TYPE *dest,
+    TYPE value, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_xor(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest or source}{Symmetric address of the data object on the
+remote PE. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The operand to the atomic operation. Not used by
+\FUNC{shmemg\_atomic\_fetch} and \FUNC{shmemg\_atomic\_fetch\_inc}.}
+\apiargument{IN}{cond}{The operand to be compared with the remote value. Used
+only by \FUNC{shmemg\_atomic\_compare\_swap}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The fetching \ac{AMO} routines perform an atomic read or update to the data
+object at address \VAR{dest} on \ac{PE} \VAR{pe} and return the prior value. The
+operations are:
+
+\begin{longtable}{|p{5.5cm}|p{9cm}|}
+\hline
+\textbf{Routine} & \textbf{Operation} \\
+\hline
+\FUNC{shmemg\_atomic\_fetch} & Atomically fetches the value at \VAR{source}. \\
+\hline
+\FUNC{shmemg\_atomic\_swap} & Atomically swaps the value at \VAR{dest} with \VAR{value} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_compare\_swap} & Compares value at \VAR{dest} with \VAR{cond}; if equal, replaces with \VAR{value}. Returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_add} & Atomically adds \VAR{value} to \VAR{dest} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_inc} & Atomically increments \VAR{dest} by one and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_and} & Atomically ANDs \VAR{value} with \VAR{dest} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_or} & Atomically ORs \VAR{value} with \VAR{dest} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_xor} & Atomically XORs \VAR{value} with \VAR{dest} and returns the prior value. \\
+\hline
+\end{longtable}
+
+The routines return after the fetched value has been delivered to the calling
+\ac{GPU} thread.
+}
+
+\apireturnvalues{
+The value of the remote data object prior to the atomic operation, of type
+\TYPE{}.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Fetching AMOs}}\label{subsec:gc_nbi_amo}
+
+Initiates a nonblocking atomic fetch or update on a symmetric data object on a
+specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_TYPENAME_atomic_fetch_nbi(TYPE *fetch,
+    const TYPE *source, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_fetch_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, const TYPE *source, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_swap_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_swap_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_compare_swap_nbi(TYPE *fetch,
+    TYPE *dest, TYPE cond, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_compare_swap_nbi(
+    shmem_ctx_t ctx, TYPE *fetch, TYPE *dest, TYPE cond,
+    TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_fetch_add_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_fetch_add_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_fetch_inc_nbi(TYPE *fetch,
+    TYPE *dest, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_fetch_inc_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_fetch_and_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_fetch_and_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_fetch_or_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_fetch_or_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+__device__ void shmemg_TYPENAME_atomic_fetch_xor_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_atomic_fetch_xor_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{fetch}{Local address of the data object to be updated with the
+fetched value. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{OUT}{dest or source}{Symmetric address of the data object on the
+remote PE. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The operand to the atomic operation.}
+\apiargument{IN}{cond}{The operand to be compared with the remote value. Used
+only by \FUNC{shmemg\_atomic\_compare\_swap\_nbi}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The nonblocking fetching \ac{AMO} routines initiate an atomic fetch or update to
+the data object at address \VAR{dest} on \ac{PE} \VAR{pe}. The routines return
+after initiating the operation. The \VAR{fetch} data object shall not be accessed
+until the operation has been completed by a subsequent call to
+\FUNC{shmemg\_quiet}. Upon completion of \FUNC{shmemg\_quiet}, the prior value
+of the remote data object has been written to \VAR{fetch} and the atomic update,
+if any, has been performed.
+
+The \VAR{fetch}, \VAR{dest}, and \VAR{source} data objects shall reside in the
+\ac{GPU} symmetric heap.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsection{Signaling Operations}\label{subsec:gc_signaling}
+
+The signaling routines in this section copy data from a contiguous local data
+object to a data object on a specified \ac{PE} and subsequently update a remote
+signal data object to indicate delivery. The signal-fetch routine reads a local
+signal value.
+
+The \VAR{dest}, \VAR{sig\_addr}, and \VAR{source} data objects for all signaling
+routines in this section shall reside in the \ac{GPU} symmetric heap. Using local
+\ac{GPU} memory, local CPU memory, or memory from the default symmetric heap as
+operands results in \textbf{undefined behavior}.
+
+\subsubsubsection{\textbf{Put-with-Signal}}\label{subsec:gc_put_signal}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently updates a remote signal data object.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_putmem_signal(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+__device__ void shmemg_ctx_putmem_signal(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_signal_tg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+__device__ void shmemg_ctx_putmem_signal_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_signal_htg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+__device__ void shmemg_ctx_putmem_signal_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object on the
+remote PE.}
+\apiargument{IN}{source}{Local address of the data object containing the data to
+be copied. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object on the
+remote PE.}
+\apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
+\apiargument{IN}{sig\_op}{Signal operator for the update on \VAR{sig\_addr}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines copy data from \VAR{source} to \VAR{dest} on \ac{PE} \VAR{pe} and
+subsequently update the signal data object at \VAR{sig\_addr}. The routines
+return after the data has been copied out of \VAR{source}. Completion of the
+signal update on the remote \ac{PE} indicates delivery of the corresponding
+\VAR{dest} data.
+
+An update to the \VAR{sig\_addr} signal data object completes as if performed
+atomically. The \VAR{dest}, \VAR{source}, and \VAR{sig\_addr} data objects shall
+reside in the \ac{GPU} symmetric heap. \VAR{sig\_addr} and \VAR{dest} shall not
+overlap in memory.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+Completion of the signal update indicates only the delivery of the corresponding
+\VAR{dest} data. Without a memory-ordering operation, there is no implied
+ordering between the signal update and another data transfer.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Put-with-Signal}}\label{subsec:gc_put_signal_nbi}
+
+Initiates a nonblocking copy of data to a specified \ac{PE} with a subsequent
+signal update.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_putmem_signal_nbi(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+__device__ void shmemg_ctx_putmem_signal_nbi(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_signal_nbi_tg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+__device__ void shmemg_ctx_putmem_signal_nbi_tg(shmem_ctx_t ctx,
+    void *dest, const void *source, size_t nelems,
+    uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_putmem_signal_nbi_htg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+__device__ void shmemg_ctx_putmem_signal_nbi_htg(shmem_ctx_t ctx,
+    void *dest, const void *source, size_t nelems,
+    uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object.}
+\apiargument{IN}{source}{Local address of the data object. Shall reside in the
+\ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object.}
+\apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
+\apiargument{IN}{sig\_op}{Signal operator for the update.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines initiate a copy and signal update. The routines return after
+initiating the operation. The operation is considered complete after a subsequent
+call to \FUNC{shmemg\_quiet}. The \VAR{dest}, \VAR{source}, and \VAR{sig\_addr}
+data objects shall reside in the \ac{GPU} symmetric heap. \VAR{sig\_addr} and
+\VAR{dest} shall not overlap in memory.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Signal-Fetch}}\label{subsec:gc_signal_fetch}
+
+Fetches the value of a local signal data object.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ uint64_t shmemg_signal_fetch(const uint64_t *sig_addr);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{sig\_addr}{Local address of the remotely accessible signal
+variable. Shall reside in the \ac{GPU} symmetric heap.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_signal\_fetch} returns the value of the signal data object at
+address \VAR{sig\_addr} on the calling \ac{PE}. Access to \VAR{sig\_addr}
+satisfies the atomicity guarantees described in the signaling operations
+introduction.
+}
+
+\apireturnvalues{
+The value of the signal data object at \VAR{sig\_addr} on the calling \ac{PE}.
+}
+\end{apidefinition}
+
+\subsubsection{Point-to-Point Synchronization}\label{subsec:gc_p2p}
+
+The point-to-point synchronization routines block or test until a symmetric data
+object on the local \ac{PE} satisfies a specified condition. All routines in this
+section operate at single-thread granularity.
+
+The \VAR{ivar} or \VAR{sig\_addr} data object shall reside in the \ac{GPU}
+symmetric heap. Using local \ac{GPU} memory, local CPU memory, or memory from the
+default symmetric heap results in \textbf{undefined behavior}.
+
+\subsubsubsection{\textbf{Wait-Until}}\label{subsec:gc_wait_until}
+
+Blocks until a symmetric data object on the local \ac{PE} satisfies a condition.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
+    TYPE cmp_value);
+\end{Csynopsis}
+
+where \TYPE{} is one of the point-to-point synchronization types defined in
+\openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ivar}{Symmetric address of the source data object. Shall reside
+in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{cmp}{The comparison operator.}
+\apiargument{IN}{cmp\_value}{The value against which \VAR{ivar} will be compared.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_wait\_until} blocks until the value of \VAR{ivar} at the calling
+\ac{PE} satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The
+supported values of \VAR{cmp} are: \CONST{SHMEM\_CMP\_EQ},
+\CONST{SHMEM\_CMP\_NE}, \CONST{SHMEM\_CMP\_GT}, \CONST{SHMEM\_CMP\_GE},
+\CONST{SHMEM\_CMP\_LT}, and \CONST{SHMEM\_CMP\_LE}.
+
+The routine shall not return until the condition is satisfied. If no \ac{PE} ever
+updates \VAR{ivar} to satisfy the condition, the routine shall not return.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Test}}\label{subsec:gc_test}
+
+Tests whether a symmetric data object on the local \ac{PE} satisfies a
+condition.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
+\end{Csynopsis}
+
+where \TYPE{} is one of the point-to-point synchronization types defined in
+\openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ivar}{Symmetric address of the source data object. Shall reside
+in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{cmp}{The comparison operator.}
+\apiargument{IN}{cmp\_value}{The value against which \VAR{ivar} will be compared.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_test} tests whether the value of \VAR{ivar} at the calling \ac{PE}
+satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The test is
+performed once and returns without blocking.
+}
+
+\apireturnvalues{
+1 if the condition is satisfied; 0 otherwise.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Signal-Wait-Until}}\label{subsec:gc_signal_wait_until}
+
+Blocks until a local signal data object satisfies a condition.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ uint64_t shmemg_signal_wait_until(uint64_t *sig_addr,
+    int cmp, uint64_t cmp_value);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{sig\_addr}{Local address of the remotely accessible signal
+variable. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{cmp}{The comparison operator.}
+\apiargument{IN}{cmp\_value}{The value against which \VAR{sig\_addr} will be
+compared.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_signal\_wait\_until} blocks until the value of the signal data
+object at \VAR{sig\_addr} satisfies the condition implied by \VAR{cmp} and
+\VAR{cmp\_value}. The routine shall not return until the condition is satisfied.
+
+Access to \VAR{sig\_addr} satisfies the atomicity guarantees described in the
+signaling operations introduction.
+}
+
+\apireturnvalues{
+The value of the signal data object at \VAR{sig\_addr} that satisfies the wait
+condition.
+}
+\end{apidefinition}
+
+\subsubsection{Memory Ordering}\label{subsec:gc_ordering}
+
+The memory ordering routines order or complete outstanding put, \ac{AMO}, and
+put-with-signal operations issued from within a \ac{GPU} device kernel. All
+memory ordering routines operate at single-thread granularity.
+
+\subsubsubsection{\textbf{SHMEMG\_FENCE}}\label{subsec:gc_fence}
+
+Ensures ordering of delivery of put, \ac{AMO}, and put-with-signal operations to
+symmetric data objects.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_fence(void);
+__device__ void shmemg_ctx_fence(shmem_ctx_t ctx);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_fence} ensures ordering of delivery of put, \ac{AMO}, and
+put-with-signal operations to symmetric data objects. All such operations issued
+to a particular remote \ac{PE} on the given context prior to the call to
+\FUNC{shmemg\_fence} are guaranteed to be delivered before any subsequent such
+operations to the same \ac{PE} on the same context.
+
+\FUNC{shmemg\_fence} guarantees order of delivery, not completion. It does not
+guarantee order of delivery of nonblocking get operations or values fetched by
+nonblocking \ac{AMO} routines.
+
+If \VAR{ctx} has the value \CONST{SHMEM\_CTX\_INVALID}, no operation is
+performed.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+\FUNC{shmemg\_fence} provides per-target-PE ordering guarantees on a given
+context. It does not ensure completion or global visibility; use
+\FUNC{shmemg\_quiet} when completion is required.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{SHMEMG\_QUIET}}\label{subsec:gc_quiet}
+
+Waits for completion of all outstanding put, \ac{AMO}, and put-with-signal
+operations to symmetric data objects.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_quiet(void);
+__device__ void shmemg_ctx_quiet(shmem_ctx_t ctx);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_quiet} ensures completion of all outstanding put, \ac{AMO}, and
+put-with-signal operations to symmetric data objects issued by the calling
+\ac{GPU} thread on the given context. All such operations are guaranteed to be
+complete and visible to all \acp{PE} when \FUNC{shmemg\_quiet} returns.
+
+\FUNC{shmemg\_quiet} also guarantees that any nonblocking operations initiated on
+the given context have fully completed. In particular, the \VAR{fetch} data
+object of a nonblocking fetching \ac{AMO} and the \VAR{dest} data object of a
+nonblocking get contain the fetched values upon return.
+
+If \VAR{ctx} has the value \CONST{SHMEM\_CTX\_INVALID}, no operation is
+performed.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+\FUNC{shmemg\_quiet} ensures completion on a single context. Outstanding
+operations on other contexts are not affected.
+}
+\end{apidefinition}
+
+\subsubsection{Collective Operations}\label{subsec:gc_collectives}
+
+The collective routines synchronize across all \acp{PE} in a team. These routines
+are provided at the same three thread granularities as the communication
+operations: thread, thread group (\texttt{\_tg}), and hardware thread group
+(\texttt{\_htg}).
+
+All \acp{PE} in the specified team shall participate in the collective operation.
+If any \ac{PE} in the team does not call the routine, the behavior is undefined.
+
+\subsubsubsection{\textbf{SHMEMG\_SYNC\_ALL}}\label{subsec:gc_sync_all}
+
+Registers the arrival of a \ac{PE} at a synchronization point and blocks until
+all \acp{PE} in \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have arrived.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_sync_all(void);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+__device__ void shmemg_sync_all_tg(void);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+__device__ void shmemg_sync_all_htg(void);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+None.
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_sync\_all} is a collective synchronization routine over
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. The routine blocks until all \acp{PE} in
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have called \FUNC{shmemg\_sync\_all}.
+
+\FUNC{shmemg\_sync\_all} ensures completion and visibility of previously issued
+memory store operations but does not ensure completion of remote memory updates
+issued via \openshmem routines. To ensure completion of remote operations before
+synchronizing, \FUNC{shmemg\_quiet} shall be called prior to
+\FUNC{shmemg\_sync\_all}.
+
+\FUNC{shmemg\_sync\_all} is equivalent to calling \FUNC{shmemg\_team\_sync} on
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{SHMEMG\_TEAM\_SYNC}}\label{subsec:gc_team_sync}
+
+Registers the arrival of a \ac{PE} at a synchronization point and blocks until
+all \acp{PE} in the specified team have arrived.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ int shmemg_team_sync(shmem_team_t team);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+__device__ int shmemg_team_sync_tg(shmem_team_t team);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+__device__ int shmemg_team_sync_htg(shmem_team_t team);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{team}{The team over which to perform the synchronization.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_team\_sync} is a collective synchronization routine over an
+existing \openshmem team. The routine blocks until all \acp{PE} in the specified
+team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team shall
+participate.
+
+\FUNC{shmemg\_team\_sync} ensures completion and visibility of previously issued
+memory store operations but does not ensure completion of remote memory updates
+issued via \openshmem routines. To ensure completion of remote operations before
+synchronizing, \FUNC{shmemg\_quiet} shall be called prior to
+\FUNC{shmemg\_team\_sync}.
+
+If \VAR{team} compares equal to \CONST{SHMEM\_TEAM\_INVALID} or is otherwise
+invalid, the behavior is undefined.
+}
+
+\apireturnvalues{
+Zero on successful synchronization; otherwise, a nonzero value.
+}
+\end{apidefinition}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Annexes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+
+\section{Writing OpenSHMEM GPU Programs}\label{annex:writing}
+
+This annex provides guidance on writing \openshmem programs that use the GPU
+extensions defined in this specification.
+
+A typical \openshmem GPU program follows these steps:
+
+\begin{enumerate}
+\item Select and make current the desired \ac{GPU} using the vendor-specific GPU
+  runtime (e.g., \texttt{cudaSetDevice}, \texttt{hipSetDevice}).
+\item Initialize the \openshmem library with GPU support by calling
+  \FUNC{shmem\_init\_thread} with \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+  \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, or both.
+\item Check the \VAR{provided} argument to confirm the requested capabilities are
+  available.
+\item Allocate symmetric memory on the \ac{GPU} symmetric heap using
+  \FUNC{shmemg\_malloc}, \FUNC{shmemg\_calloc}, or \FUNC{shmemg\_align}.
+\item Perform communication:
+  \begin{itemize}
+  \item \textbf{GPU-aware:} Use standard \openshmem routines from the host with
+    GPU-attached memory as operands.
+  \item \textbf{GPU-centric:} Launch device kernels that call \texttt{shmemg\_}
+    routines directly.
+  \end{itemize}
+\item Free GPU symmetric heap memory using \FUNC{shmemg\_free}.
+\item Finalize the \openshmem library using \FUNC{shmem\_finalize}.
+\end{enumerate}
+
+\subsection*{Example: GPU-Aware Put}
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+#include <stdio.h>
+
+int main(void) {
+    int provided;
+    int requested = SHMEM_THREAD_SINGLE | SHMEM_DEVICE_HOST_INIT;
+
+    /* Select GPU before initializing OpenSHMEM */
+    /* e.g., cudaSetDevice(0); */
+
+    shmem_init_thread(requested, &provided);
+    if (!(provided & SHMEM_DEVICE_HOST_INIT)) {
+        fprintf(stderr, "GPU-aware support not available\n");
+        shmem_global_exit(1);
+    }
+
+    int me = shmem_my_pe();
+    int npes = shmem_n_pes();
+
+    int *d_buf = (int *)shmemg_malloc(sizeof(int));
+
+    if (me == 0) {
+        int value = 42;
+        shmem_int_put(d_buf, &value, 1, 1);
+    }
+
+    shmem_barrier_all();
+
+    shmemg_free(d_buf);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
+
+\subsection*{Example: GPU-Centric Put}
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void put_kernel(int *dest, int *source, int pe) {
+    shmemg_putmem(dest, source, sizeof(int), pe);
+    shmemg_quiet();
+}
+
+int main(void) {
+    int provided;
+    int requested = SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT;
+
+    /* Select GPU before initializing OpenSHMEM */
+    /* e.g., cudaSetDevice(0); */
+
+    shmem_init_thread(requested, &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT)) {
+        fprintf(stderr, "GPU-centric support not available\n");
+        shmem_global_exit(1);
+    }
+
+    int me = shmem_my_pe();
+    int npes = shmem_n_pes();
+    int next_pe = (me + 1) % npes;
+
+    int *d_buf = (int *)shmemg_malloc(sizeof(int));
+    int *d_src = (int *)shmemg_malloc(sizeof(int));
+
+    /* Initialize d_src on GPU (vendor-specific) */
+
+    put_kernel<<<1, 1>>>(d_buf, d_src, next_pe);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();
+
+    shmemg_free(d_src);
+    shmemg_free(d_buf);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
+
+\clearpage
+
+\section{Compiling and Running OpenSHMEM GPU Programs}\label{annex:compiling}
+
+Compilation of \openshmem GPU programs requires both the \openshmem
+implementation's compile wrapper and the GPU compiler toolchain. The exact
+commands depend on the implementation and GPU vendor.
+
+\subsection*{Compilation}
+
+A typical compilation workflow:
+
+\begin{enumerate}
+\item Compile GPU device code using the vendor compiler (e.g., \texttt{nvcc},
+  \texttt{hipcc}, \texttt{icpx -fsycl}).
+\item Link with the \openshmem library that supports GPU extensions.
+\item Ensure both \texttt{shmem.h} and \texttt{shmemg.h} are in the include
+  path.
+\end{enumerate}
+
+Example (CUDA):
+\begin{lstlisting}[language=bash,style=SourceListingsDefault]
+nvcc -c gpu_kernel.cu -o gpu_kernel.o
+oshcc -c host_code.c -o host_code.o
+oshcc gpu_kernel.o host_code.o -o my_program -lcudart
+\end{lstlisting}
+
+\subsection*{Execution}
+
+Programs are launched using the \openshmem launcher (e.g., \texttt{oshrun}):
+\begin{lstlisting}[language=bash,style=SourceListingsDefault]
+export SHMEM_DEVICE_SYMMETRIC_SIZE=256m
+oshrun -n 4 ./my_program
+\end{lstlisting}
+
+The \ENVVAR{SHMEM\_DEVICE\_SYMMETRIC\_SIZE} environment variable controls the
+size of the \ac{GPU} symmetric heap allocated per \ac{PE}.
+
+\clearpage
+
+\section{Undefined Behavior in OpenSHMEM GPU Support}\label{annex:undefined}
+
+This annex consolidates the conditions that result in undefined behavior when
+using the \openshmem GPU support extensions. These conditions are also stated in
+their respective sections throughout this specification.
+
+\begin{enumerate}
+\item Calling any \texttt{shmemg\_} routine without first initializing the
+  \openshmem library with the required GPU support constant.
+\item Calling any GPU-centric routine without the
+  \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} capability having been requested and
+  returned.
+\item Providing different values for the \VAR{requested} GPU support constants
+  across \acp{PE} in \FUNC{shmem\_init\_thread}.
+\item Using a device context for GPU-aware (host-initiated) operations.
+\item Using a non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for
+  GPU-centric (device kernel) operations.
+\item Using a context associated with a team other than
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} or a team derived from it for GPU-centric
+  operations.
+\item Passing an invalid device context handle to a GPU-centric routine.
+\item Concurrent atomic operations on the same memory location using contexts
+  from different atomicity domains.
+\item Calling \FUNC{shmemg\_malloc} with a \VAR{size} value that differs across
+  \acp{PE}.
+\item Calling \FUNC{shmemg\_calloc} with \VAR{count} or \VAR{size} values that
+  differ across \acp{PE}.
+\item Calling \FUNC{shmemg\_align} with an \VAR{alignment} value that is not a
+  multiple of \texttt{sizeof(void *)} or is not a power of two.
+\item Calling \FUNC{shmemg\_align} with \VAR{alignment} or \VAR{size} values that
+  differ across \acp{PE}.
+\item Calling \FUNC{shmemg\_free} with a \VAR{ptr} value that differs across
+  \acp{PE}.
+\item Using GPU-attached memory for the \VAR{status} or \VAR{indices} arguments
+  of the array variants of wait-until and test.
+\item Using local \ac{GPU} memory, local CPU memory, or memory from the default
+  symmetric heap as operands for any GPU-centric \ac{RMA}, \ac{AMO}, signaling,
+  or synchronization operation.
+\item Calling a thread group (\texttt{\_tg}) or hardware thread group
+  (\texttt{\_htg}) variant without all threads in the group participating.
+\item Calling a \texttt{\_tg} or \texttt{\_htg} variant with arguments that
+  differ across threads in the group.
+\item Passing an invalid \ac{PE} number to a GPU-centric communication routine.
+\item Accessing data from a prior operation to the \ac{GPU} symmetric heap before
+  that operation is visible, when the sender used \FUNC{shmem\_fence} between two
+  operations targeting different memory domains on the same \ac{PE}.
+\item Calling \FUNC{shmemg\_sync\_all}, \FUNC{shmemg\_team\_sync}, or their
+  \texttt{\_tg}/\texttt{\_htg} variants without all \acp{PE} in the specified
+  team participating.
+\item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that compares
+  equal to \CONST{SHMEM\_TEAM\_INVALID} or is otherwise invalid.
+\end{enumerate}
+
+\clearpage
+
+\section{History of GPU Support in OpenSHMEM}\label{annex:history}
+
+Several vendor-specific implementations extended the \openshmem \ac{API} to
+\ac{GPU} architectures and informed the design of this specification.
+
+\begin{description}
+\item[NVSHMEM.] NVIDIA's \openshmem implementation for CUDA. NVSHMEM provides
+  GPU-initiated communication from CUDA kernels and introduced the thread group
+  and warp-level collective variants that influenced the \texttt{\_tg} and
+  \texttt{\_htg} suffixes in this specification.
+
+\item[rocSHMEM.] AMD's \openshmem implementation for HIP (formerly ROC\_SHMEM).
+  rocSHMEM provides GPU-initiated communication from HIP kernels with wavefront
+  and workgroup granularity.
+
+\item[Intel SHMEM (ISHMEM).] Intel's \openshmem implementation for SYCL. ISHMEM
+  provides GPU-initiated communication from SYCL kernels with sub-group and
+  work-group granularity.
+\end{description}
+
+The GPU-centric routines in this specification adopt a vendor-neutral naming
+convention (\texttt{shmemg\_}) and a generalized thread granularity model
+(thread, thread group, hardware thread group) derived from patterns established
+by these implementations.
+
+\clearpage
+
+\section{Changes to this Document}\label{annex:changes}
+
+\subsection*{Version 0.1}
+
+\begin{itemize}
+\item Initial release of the \openshmem Auxiliary Specification for GPU Support.
+\item Defined GPU-aware communication model for host-initiated operations with
+  GPU-attached memory buffers.
+\item Defined GPU-centric communication model for device-initiated operations
+  from within \ac{GPU} kernels.
+\item Introduced \ac{GPU} symmetric heap and associated memory management
+  routines (\FUNC{shmemg\_malloc}, \FUNC{shmemg\_calloc}, \FUNC{shmemg\_align},
+  \FUNC{shmemg\_free}).
+\item Defined predefined device teams (\CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
+  \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}) and default device context
+  (\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}).
+\item Defined GPU-centric \ac{RMA}, \ac{AMO}, signaling, point-to-point
+  synchronization, memory ordering, and collective operations with thread, thread
+  group, and hardware thread group granularity.
+\item Specified cross-domain ordering semantics for \FUNC{shmem\_fence},
+  \FUNC{shmem\_quiet}, and \FUNC{shmem\_put\_signal} when GPU-aware communication
+  is enabled.
+\item Documented all conditions that result in undefined behavior (Annex~C).
+\end{itemize}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Index entries
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Library Constants
+\index{SHMEM\_DEVICE\_HOST\_INIT}
+\index{SHMEM\_DEVICE\_KERNEL\_INIT}
+\index{SHMEM\_DEVICE\_CTX}
+\index{SHMEM\_DEVICE\_CTX\_DEFAULT}
+\index{SHMEM\_DEVICE\_TEAM\_WORLD}
+\index{SHMEM\_DEVICE\_TEAM\_SHARED}
+\index{SHMEM\_CMP\_EQ}
+\index{SHMEM\_CMP\_NE}
+\index{SHMEM\_CMP\_GT}
+\index{SHMEM\_CMP\_GE}
+\index{SHMEM\_CMP\_LT}
+\index{SHMEM\_CMP\_LE}
+
+% Environment Variables
+\index{SHMEM\_DEVICE\_SYMMETRIC\_SIZE}
+
+% Types
+\index{shmem\_ctx\_t}
+\index{shmem\_team\_t}
+
+% Host-side Functions (Initialization and Memory Management)
+\index{shmem\_init\_thread}
+\index{shmem\_team\_create\_ctx}
+\index{shmemg\_malloc}
+\index{shmemg\_calloc}
+\index{shmemg\_align}
+\index{shmemg\_free}
+
+% Host-side Functions (GPU-Aware Extensions)
+\index{shmem\_fence}
+\index{shmem\_ctx\_fence}
+\index{shmem\_quiet}
+\index{shmem\_ctx\_quiet}
+\index{shmem\_put\_signal}
+\index{shmem\_barrier\_all}
+\index{shmem\_barrier}
+
+% GPU-Centric Query Routines
+\index{shmemg\_my\_pe}
+\index{shmemg\_n\_pes}
+
+% GPU-Centric RMA -- Blocking Put
+\index{shmemg\_putmem}
+\index{shmemg\_ctx\_putmem}
+\index{shmemg\_putmem\_tg}
+\index{shmemg\_ctx\_putmem\_tg}
+\index{shmemg\_putmem\_htg}
+\index{shmemg\_ctx\_putmem\_htg}
+
+% GPU-Centric RMA -- Nonblocking Put
+\index{shmemg\_putmem\_nbi}
+\index{shmemg\_ctx\_putmem\_nbi}
+\index{shmemg\_putmem\_nbi\_tg}
+\index{shmemg\_ctx\_putmem\_nbi\_tg}
+\index{shmemg\_putmem\_nbi\_htg}
+\index{shmemg\_ctx\_putmem\_nbi\_htg}
+
+% GPU-Centric RMA -- Blocking Get
+\index{shmemg\_getmem}
+\index{shmemg\_ctx\_getmem}
+\index{shmemg\_getmem\_tg}
+\index{shmemg\_ctx\_getmem\_tg}
+\index{shmemg\_getmem\_htg}
+\index{shmemg\_ctx\_getmem\_htg}
+
+% GPU-Centric RMA -- Nonblocking Get
+\index{shmemg\_getmem\_nbi}
+\index{shmemg\_ctx\_getmem\_nbi}
+\index{shmemg\_getmem\_nbi\_tg}
+\index{shmemg\_ctx\_getmem\_nbi\_tg}
+\index{shmemg\_getmem\_nbi\_htg}
+\index{shmemg\_ctx\_getmem\_nbi\_htg}
+
+% GPU-Centric AMO -- Non-fetching
+\index{shmemg\_TYPENAME\_atomic\_set}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_set}
+\index{shmemg\_TYPENAME\_atomic\_inc}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_inc}
+\index{shmemg\_TYPENAME\_atomic\_add}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_add}
+\index{shmemg\_TYPENAME\_atomic\_and}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_and}
+\index{shmemg\_TYPENAME\_atomic\_or}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_or}
+\index{shmemg\_TYPENAME\_atomic\_xor}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_xor}
+
+% GPU-Centric AMO -- Fetching
+\index{shmemg\_TYPENAME\_atomic\_fetch}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch}
+\index{shmemg\_TYPENAME\_atomic\_swap}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_swap}
+\index{shmemg\_TYPENAME\_atomic\_compare\_swap}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_compare\_swap}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_inc}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_inc}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_add}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_add}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_and}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_and}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_or}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_or}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_xor}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_xor}
+
+% GPU-Centric AMO -- Nonblocking Fetching
+\index{shmemg\_TYPENAME\_atomic\_fetch\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_swap\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_swap\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_compare\_swap\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_compare\_swap\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_inc\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_inc\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_add\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_add\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_and\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_and\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_or\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_or\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_xor\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_xor\_nbi}
+
+% GPU-Centric Signaling
+\index{shmemg\_putmem\_signal}
+\index{shmemg\_ctx\_putmem\_signal}
+\index{shmemg\_putmem\_signal\_tg}
+\index{shmemg\_ctx\_putmem\_signal\_tg}
+\index{shmemg\_putmem\_signal\_htg}
+\index{shmemg\_ctx\_putmem\_signal\_htg}
+\index{shmemg\_putmem\_signal\_nbi}
+\index{shmemg\_ctx\_putmem\_signal\_nbi}
+\index{shmemg\_putmem\_signal\_nbi\_tg}
+\index{shmemg\_ctx\_putmem\_signal\_nbi\_tg}
+\index{shmemg\_putmem\_signal\_nbi\_htg}
+\index{shmemg\_ctx\_putmem\_signal\_nbi\_htg}
+\index{shmemg\_signal\_fetch}
+
+% GPU-Centric Point-to-Point Synchronization
+\index{shmemg\_TYPENAME\_wait\_until}
+\index{shmemg\_TYPENAME\_test}
+\index{shmemg\_signal\_wait\_until}
+\index{shmemg\_wait\_until}
+\index{shmemg\_test}
+
+% GPU-Centric Memory Ordering
+\index{shmemg\_fence}
+\index{shmemg\_ctx\_fence}
+\index{shmemg\_quiet}
+\index{shmemg\_ctx\_quiet}
+
+% GPU-Centric Collective Operations
+\index{shmemg\_sync\_all}
+\index{shmemg\_sync\_all\_tg}
+\index{shmemg\_sync\_all\_htg}
+\index{shmemg\_team\_sync}
+\index{shmemg\_team\_sync\_tg}
+\index{shmemg\_team\_sync\_htg}
+
+\printindex
+
+\end{document}
