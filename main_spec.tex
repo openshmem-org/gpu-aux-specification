@@ -2229,13 +2229,41 @@ The \VAR{ivar} or \VAR{sig\_addr} data object shall reside in the \ac{GPU}
 symmetric heap. Using local \ac{GPU} memory, local CPU memory, or memory from the
 default symmetric heap results in \textbf{undefined behavior}.
 
+\subsubsubsection{Supported Comparison Values}\label{subsec:gc_supported_types}
+
+These are enumerated types building on the integer values supported in the
+\openshmem 1.6 Standard, following \VAR{shmem\_cmp\_val\_t} naming..
+
+\begin{longtable}{|p{5cm}|p{9cm}|}
+    \hline
+    \textbf{Operation} & \textbf{Description} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Operation} & \textbf{Description} \\
+    \hline
+    \endhead
+    \ac{SHMEM\_CMP\_EQ} & Equality Comparison \\
+    \hline
+    \ac{SHMEM\_CMP\_NE} & Inequality Comparison \\
+    \hline
+    \ac{SHMEM\_CMP\_GT} & Greater-Than Comparison \\
+    \hline
+    \ac{SHMEM\_CMP\_LT} & Less-Than Comparison \\
+    \hline
+    \ac{SHMEM\_CMP\_GE} & Greater-Than-Or-Equal-To Comparison \\
+    \hline
+    \ac{SHMEM\_CMP\_LE} & Less-Than-Or-Equal-To-Comparison \\
+    \hline
+\end{longtable}
+
 \subsubsubsection{\textbf{Wait-Until}}\label{subsec:gc_wait_until}
 
 Blocks until a symmetric data object on the local \ac{PE} satisfies a condition.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
+__device__ void shmemg_TYPENAME_wait_until(TYPE *ivar, shmem_cmp_val_t cmp,
     TYPE cmp_value);
 \end{Csynopsis}
 
@@ -2253,9 +2281,12 @@ in the \ac{GPU} symmetric heap.}
 Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_wait\_until} blocks until the value of \VAR{ivar} at the calling
 \ac{PE} satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The
-supported values of \VAR{cmp} are: \CONST{SHMEM\_CMP\_EQ},
-\CONST{SHMEM\_CMP\_NE}, \CONST{SHMEM\_CMP\_GT}, \CONST{SHMEM\_CMP\_GE},
-\CONST{SHMEM\_CMP\_LT}, and \CONST{SHMEM\_CMP\_LE}.
+    supported values of \VAR{cmp} are in Section
+    \ref{subsec:gc_supported_types}.
+
+%: \CONST{SHMEM\_CMP\_EQ},
+%\CONST{SHMEM\_CMP\_NE}, \CONST{SHMEM\_CMP\_GT}, \CONST{SHMEM\_CMP\_GE},
+%\CONST{SHMEM\_CMP\_LT}, and \CONST{SHMEM\_CMP\_LE}.
 
 The routine shall not return until the condition is satisfied. If no \ac{PE} ever
 updates \VAR{ivar} to satisfy the condition, the routine shall not return.
@@ -2273,7 +2304,7 @@ condition.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
+__device__ int shmemg_TYPENAME_test(TYPE *ivar, shmem_cmp_val_t cmp, TYPE cmp_value);
 \end{Csynopsis}
 
 where \TYPE{} is one of the point-to-point synchronization types defined in
@@ -2305,7 +2336,7 @@ Blocks until a local signal data object satisfies a condition.
 \begin{apidefinition}
 \begin{Csynopsis}
 __device__ uint64_t shmemg_signal_wait_until(uint64_t *sig_addr,
-    int cmp, uint64_t cmp_value);
+    shmem_cmp_val_t cmp, uint64_t cmp_value);
 \end{Csynopsis}
 
 \begin{apiarguments}
