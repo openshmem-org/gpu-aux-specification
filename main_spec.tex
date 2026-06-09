@@ -119,6 +119,8 @@ specification, including:
 Implementation of these extensions is optional. An \openshmem implementation may
 support GPU-aware communication, GPU-centric communication, both, or neither.
 Applications may query implementation capabilities at runtime.
+Examples of GPU-aware and GPU-centric communication are provided in
+\cref{annex:writing}.
 
 Applications that do not use GPU-attached memory buffers or the interfaces
 defined herein shall continue to execute correctly.
@@ -152,7 +154,7 @@ The following are \textbf{not} defined:
 \item Performance characteristics, optimization requirements, or benchmarking
   methodologies
 \item Network hardware capabilities, protocols, or transport-layer mechanisms
-\item Extensions for non-GPU accelerators (FPGAs, DSPs, etc.)
+\item Extensions for non-GPU accelerators (FPGAs, DSPs, TPUs, DPUs, etc.)
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -278,8 +280,9 @@ synchronization, and collective operations---retain their specified behavior and
 may be used with GPU-attached memory buffers.
 
 The remote operand in a communication operation may reside in either the default
-symmetric heap or the \ac{GPU} symmetric heap. The same \openshmem routine shall
-be used regardless of whether the remote memory is CPU-attached or GPU-attached.
+(CPU-attached) symmetric heap defined by \openshmem 1.6 or the \ac{GPU}
+symmetric heap. The same \openshmem routine shall be used regardless of whether
+the remote memory is CPU-attached or GPU-attached.
 
 \subsection{GPU-Aware Communication}\label{subsec:gpu_aware_comm}
 
@@ -295,9 +298,13 @@ calling conventions. GPU-attached memory buffers may be used as:
 \item \textbf{Local buffers} in collective operations
 \end{itemize}
 
-The \openshmem implementation shall manage data movement between the \ac{GPU}
-memory hierarchy and the network interface. The completion and ordering semantics
-defined in \openshmem 1.6 shall apply.
+When a GPU-attached memory buffer is used as an operand in an \openshmem
+routine, the \openshmem implementation shall make the contents of that buffer
+available to the communication operation and shall make updates visible according
+to the completion and ordering semantics defined in \openshmem 1.6. This
+requirement does not prescribe the implementation mechanism, such as direct
+network access to GPU-attached memory, staging through CPU-attached memory, or
+runtime synchronization with the \ac{GPU} memory hierarchy.
 
 \subsection{GPU-Centric Communication}\label{subsec:gpu_centric_comm}
 
@@ -340,9 +347,10 @@ Synchronization & Barrier, fence, quiet, and point-to-point wait/test primitives
 
 Ordering and completion semantics follow the \openshmem memory model. Updates to
 symmetric objects are unordered by default. A \ac{PE} may enforce point-to-point
-ordering using \FUNC{shmem\_fence} and global ordering using
-\FUNC{shmem\_quiet}. Barrier and point-to-point wait/test operations may be used
-to coordinate access across \acp{PE}.
+ordering using \FUNC{shmem\_fence}. \FUNC{shmem\_quiet} may be used to ensure
+completion of prior communication operations issued by the calling \ac{PE}.
+Barrier and point-to-point wait/test operations may be used to coordinate access
+across \acp{PE}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 6: Team Management
@@ -384,10 +392,10 @@ which may differ from the CPU memory topology that determines
 
 \subsection{Atomicity Domains}\label{subsec:atomicity_domains}
 
-The \openshmem specification defines an atomicity domain as a set of
+The \openshmem 1.6 specification defines an atomicity domain as a set of
 communication contexts whose associated teams are all split by (possibly
 recursive) calls to a \FUNC{shmem\_team\_split\_*} routine from a common
-predefined team. The \openshmem specification defines two predefined teams,
+predefined team. The \openshmem 1.6 specification defines two predefined teams,
 \CONST{SHMEM\_TEAM\_WORLD} and \CONST{SHMEM\_TEAM\_SHARED}, each forming a
 separate atomicity domain.
 
@@ -445,7 +453,7 @@ operations.
 \endhead
 Device context & \CONST{SHMEM\_DEVICE\_CTX} option & GPU-centric operations (from GPU kernels) \\
 \hline
-Host context & Without \CONST{SHMEM\_DEVICE\_CTX} (incl.\ \CONST{SHMEM\_CTX\_DEFAULT}) & GPU-aware or host-side operations \\
+Host context & No \CONST{SHMEM\_DEVICE\_CTX} option; includes \CONST{SHMEM\_CTX\_DEFAULT} & GPU-aware or host-side operations \\
 \hline
 \end{longtable}
 
