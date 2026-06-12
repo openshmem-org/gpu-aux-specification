@@ -1190,8 +1190,8 @@ The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
 
 \subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
 
-Ensures ordering of delivery of put, \ac{AMO}, memory store, and put-with-signal
-operations on symmetric data objects when GPU-aware communication is enabled.
+Ensures ordering of delivery of put, non-blocking get, \ac{AMO}, memory store, and put-with-signal
+operations on symmetric data objects in the same memory domain when GPU-aware communication is enabled.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -1208,9 +1208,9 @@ the default context.}
 \apidescription{
 The \FUNC{shmem\_fence} routine ensures ordering of delivery of put, \ac{AMO},
 memory store, and put-with-signal operations on symmetric data objects. All such
-operations on symmetric data objects issued to a particular \ac{PE} on the given
+operations on symmetric data objects issued to a memory domain on a particular \ac{PE} on the given
 context prior to the call to \FUNC{shmem\_fence} are guaranteed to be delivered
-before any subsequent such operations to the same \ac{PE} on the same context.
+before any subsequent such operations to the same domain on the same \ac{PE} on the same context.
 \FUNC{shmem\_fence} guarantees order of delivery, not completion. It does not
 guarantee order of delivery of nonblocking get or values fetched by nonblocking
 \ac{AMO} routines.
@@ -1299,7 +1299,7 @@ a single memory domain and does not guarantee cross-domain visibility.
 }
 \end{apidefinition}
 
-\subsubsection{SHMEM\_PUT\_SIGNAL (Cross-Domain Ordering)}\label{subsec:ga_put_signal_ordering}
+\subsubsection{SHMEM\_PUT\_SIGNAL}\label{subsec:ga_put_signal_ordering}
 
 Copies data from a contiguous local data object to a data object on a specified
 \ac{PE} and subsequently updates a remote flag to signal completion. The
