@@ -1497,10 +1497,10 @@ operations results in \textbf{undefined behavior}.
 
 \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
 type \CTYPE{shmem\_ctx\_t} associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
-All GPU-centric \ac{RMA} and \ac{AMO} operations that do not specify a context
-shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU} threads may
-pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable routine that
-accepts a context argument.
+All GPU-centric communication operations and synchronizations that do not specify
+a context shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU}
+threads may pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable
+routine that accepts a context argument.
 
 Explicit device contexts are created on the host using
 \FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. The
