@@ -1598,7 +1598,7 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 be copied. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
 \apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
-with \VAR{ctx}, or \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} otherwise.}
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1651,7 +1651,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \apiargument{IN}{source}{Local address of the object containing the data to be
 copied. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1702,7 +1703,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{source}{Symmetric address of the source data object.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1753,7 +1755,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{source}{Symmetric address of the source data object.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1829,7 +1832,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{value}{The operand to the atomic operation. Not used by
 \FUNC{shmemg\_atomic\_inc}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1921,7 +1925,8 @@ remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \FUNC{shmemg\_atomic\_fetch} and \FUNC{shmemg\_atomic\_fetch\_inc}.}
 \apiargument{IN}{cond}{The operand to be compared with the remote value. Used
 only by \FUNC{shmemg\_atomic\_compare\_swap}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -2023,7 +2028,8 @@ remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{value}{The operand to the atomic operation.}
 \apiargument{IN}{cond}{The operand to be compared with the remote value. Used
 only by \FUNC{shmemg\_atomic\_compare\_swap\_nbi}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -2104,7 +2110,8 @@ be copied. Shall reside in the \ac{GPU} symmetric heap.}
 remote PE.}
 \apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
 \apiargument{IN}{sig\_op}{Signal operator for the update on \VAR{sig\_addr}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -2177,7 +2184,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object.}
 \apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
 \apiargument{IN}{sig\_op}{Signal operator for the update.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
