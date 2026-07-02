@@ -1188,6 +1188,8 @@ The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
 
 \subsection{Memory Ordering}\label{subsec:gpu_aware_ordering}
 
+Host-initiated memory ordering routines operate at single-thread granularity.
+
 \subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
 
 Ensures ordering of delivery of put, \ac{AMO}, memory store, and put-with-signal
@@ -2345,8 +2347,9 @@ condition.
 \subsubsection{Memory Ordering}\label{subsec:gc_ordering}
 
 The memory ordering routines order or complete outstanding put, \ac{AMO}, and
-put-with-signal operations issued from within a \ac{GPU} device kernel. All
-memory ordering routines operate at single-thread granularity.
+put-with-signal operations issued from within a \ac{GPU} device kernel.
+Device-initiated memory ordering routines are provided at thread, thread group,
+and hardware thread group granularities.
 
 \subsubsubsection{\textbf{SHMEMG\_FENCE}}\label{subsec:gc_fence}
 
