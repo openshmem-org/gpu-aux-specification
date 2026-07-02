@@ -1489,11 +1489,11 @@ return value.
 
 \subsection{Context Management}\label{subsec:gc_context}
 
-Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
-or teams created from \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} through
-\FUNC{shmem\_team\_split\_strided} and \FUNC{shmem\_team\_split\_2d} routines
-are capable of performing GPU-centric communication operations from within
-\ac{GPU} kernels. Using a context associated with any other team for GPU-centric
+Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or teams created from either of them through
+\FUNC{shmem\_team\_split\_strided} and \FUNC{shmem\_team\_split\_2d} routines are
+capable of performing GPU-centric communication operations from within \ac{GPU}
+kernels. Using a context associated with any other team for GPU-centric
 operations results in \textbf{undefined behavior}.
 
 \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
@@ -2705,8 +2705,8 @@ their respective sections throughout this specification.
 \item Using a non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for
   GPU-centric (device kernel) operations.
 \item Using a context associated with a team other than
-  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} or a team derived from it for GPU-centric
-  operations.
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+  team derived from either of them for GPU-centric operations.
 \item Passing an invalid device context handle to a GPU-centric routine.
 \item Concurrent atomic operations on the same memory location using contexts
   from different atomicity domains.
