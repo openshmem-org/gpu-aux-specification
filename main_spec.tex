@@ -2717,7 +2717,9 @@ their respective sections throughout this specification.
 \item Using a context associated with a team other than
   \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
   team derived from either of them for GPU-centric operations.
-\item Passing an invalid device context handle to a GPU-centric routine.
+\item Passing an invalid device context handle to a GPU-centric routine, except
+  where the routine explicitly defines behavior for
+  \CONST{SHMEM\_CTX\_INVALID}.
 \item Concurrent atomic operations on the same memory location using contexts
   from different atomicity domains.
 \item Calling \FUNC{shmemg\_malloc} with a \VAR{size} value that differs across
