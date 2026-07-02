@@ -436,18 +436,22 @@ defined by the \openshmem 1.6 specification.
 \endhead
 \LibConstRef{SHMEM\_DEVICE\_HOST\_INIT} &
 Option to \FUNC{shmem\_init\_thread} that requests GPU-aware communication
-support. When this option is provided, the implementation shall establish the
-PE-to-GPU association and prepare the runtime for GPU-aware operations on the
-\ac{GPU} symmetric heap. An implementation may support
-\CONST{SHMEM\_DEVICE\_HOST\_INIT}, \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or
-neither. \\
+support. When this option is provided, the implementation shall prepare the
+runtime for GPU-aware operations on the \ac{GPU} symmetric heap. Any requested
+GPU support option establishes the PE-to-GPU association and initializes the
+\ac{GPU} symmetric heap, as described in \FUNC{shmem\_init\_thread}. An
+implementation may support \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or neither. \\
 \hline
 \LibConstRef{SHMEM\_DEVICE\_KERNEL\_INIT} &
 Option to \FUNC{shmem\_init\_thread} that requests GPU-centric communication
 support. When this option is provided, the implementation shall prepare the
-runtime for communication operations invoked from within GPU kernels. An
-implementation may support \CONST{SHMEM\_DEVICE\_HOST\_INIT},
-\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or neither. \\
+runtime for communication operations invoked from within GPU kernels. Any
+requested GPU support option establishes the PE-to-GPU association and
+initializes the \ac{GPU} symmetric heap, as described in
+\FUNC{shmem\_init\_thread}. An implementation may support
+\CONST{SHMEM\_DEVICE\_HOST\_INIT}, \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or
+neither. \\
 \hline
 \LibConstRef{SHMEM\_DEVICE\_CTX} &
 Context creation option that specifies the communication context shall support
