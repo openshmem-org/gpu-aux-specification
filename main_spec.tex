@@ -1526,6 +1526,11 @@ memory, or memory from the default symmetric heap as source, destination, or
 synchronization operands for GPU-centric communication operations results in
 \textbf{undefined behavior}.
 
+For routines with a \VAR{pe} argument, the \VAR{pe} argument shall identify a
+\ac{PE} in the team associated with the given \VAR{ctx} when provided, or the
+default context otherwise. Passing an invalid \ac{PE} number results in
+\textbf{undefined behavior}.
+
 Each communication routine is provided at three thread granularities:
 
 \begin{longtable}{|p{3cm}|p{3cm}|p{8.5cm}|}
