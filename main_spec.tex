@@ -2808,9 +2808,11 @@ by these implementations.
 \item Defined predefined device teams (\CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
   \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}) and default device context
   (\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}).
-\item Defined GPU-centric \ac{RMA}, \ac{AMO}, signaling, point-to-point
-  synchronization, memory ordering, and collective operations with thread, thread
-  group, and hardware thread group granularity.
+\item Defined GPU-centric \ac{RMA}, put-with-signal, memory ordering, and
+  collective operations with thread, thread group, and hardware thread group
+  granularity.
+\item Defined GPU-centric \ac{AMO}, signal-fetch, and point-to-point
+  synchronization operations at single-thread granularity.
 \item Specified cross-domain ordering semantics for \FUNC{shmem\_fence},
   \FUNC{shmem\_quiet}, and \FUNC{shmem\_put\_signal} when GPU-aware communication
   is enabled.
