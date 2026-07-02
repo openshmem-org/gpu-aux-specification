@@ -605,12 +605,13 @@ both of the following constants, combined with the thread level using bitwise OR
 \end{itemize}
 
 \FUNC{shmem\_init\_thread} is extended to accept GPU support options in the
-\VAR{requested} argument. When \CONST{SHMEM\_DEVICE\_HOST\_INIT} is included in
+\VAR{requested} argument. When any GPU support option is included in
 \VAR{requested}, the implementation shall establish the PE-to-GPU association and
-initialize the \ac{GPU} symmetric heap for GPU-aware communication. When
-\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is included, the implementation shall
-additionally prepare the runtime for GPU-centric communication operations
-invoked from within GPU kernels.
+initialize the \ac{GPU} symmetric heap. When \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+is included in \VAR{requested}, the implementation shall prepare the runtime for
+GPU-aware communication. When \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is included in
+\VAR{requested}, the implementation shall prepare the runtime for GPU-centric
+communication operations invoked from within GPU kernels.
 
 The \VAR{provided} argument returns the thread level and GPU support actually
 provided by the implementation. The GPU support bits in \VAR{provided} shall
