@@ -1408,7 +1408,8 @@ ensure completion of remote memory updates issued through \openshmem routines.
 \section{GPU-Centric Communication}\label{sec:gpu_centric}
 
 This section defines routines that shall be invoked from within \ac{GPU} device
-kernels. These routines shall not be called from the host.
+kernels. Calling these routines from the host results in \textbf{undefined
+behavior}.
 
 The \openshmem library shall have been initialized with
 \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} and the corresponding capability shall have
@@ -2696,6 +2697,7 @@ their respective sections throughout this specification.
 \item Calling any GPU-centric routine without the
   \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} capability having been requested and
   returned.
+\item Calling any GPU-centric routine from the host.
 \item Providing different values for the \VAR{requested} GPU support constants
   across \acp{PE} in \FUNC{shmem\_init\_thread}.
 \item Using a device context for GPU-aware (host-initiated) operations.
