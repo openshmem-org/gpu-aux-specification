@@ -2501,15 +2501,17 @@ __device__ int shmemg_team_sync_htg(shmem_team_t team);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
-\apiargument{IN}{team}{The team over which to perform the synchronization.}
+\apiargument{IN}{team}{The device team over which to perform the synchronization.}
 \end{apiarguments}
 
 \apidescription{
 Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_team\_sync} is a collective synchronization routine over an
-existing \openshmem team. The routine blocks until all \acp{PE} in the specified
-team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team shall
-participate.
+existing device team. The \VAR{team} argument shall be
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+team created from either of them. The routine blocks until all \acp{PE} in the
+specified team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team
+shall participate.
 
 \FUNC{shmemg\_team\_sync} ensures completion and visibility of previously issued
 memory store operations but does not ensure completion of remote memory updates
@@ -2736,6 +2738,9 @@ their respective sections throughout this specification.
 \item Calling \FUNC{shmemg\_sync\_all}, \FUNC{shmemg\_team\_sync}, or their
   \texttt{\_tg}/\texttt{\_htg} variants without all \acp{PE} in the specified
   team participating.
+\item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that is not
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+  team derived from either of them.
 \item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that compares
   equal to \CONST{SHMEM\_TEAM\_INVALID} or is otherwise invalid.
 \end{enumerate}
