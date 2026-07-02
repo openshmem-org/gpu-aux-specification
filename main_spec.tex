@@ -1503,12 +1503,13 @@ a context shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU}
 threads may pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable
 routine that accepts a context argument.
 
-Explicit device contexts are created on the host using
-\FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. The
-team argument shall be \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} or a team derived from
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. Once created, these contexts may be passed
-to device-callable routines from within \ac{GPU} kernels. Device contexts shall
-not be created or destroyed from within \ac{GPU} kernels.
+Explicit device contexts are created on the host using \FUNC{shmem\_ctx\_create}
+or \FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. A
+context created with \FUNC{shmem\_ctx\_create} is associated with
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. For \FUNC{shmem\_team\_create\_ctx}, the team
+argument shall be an existing device team. Once created, these contexts may be
+passed to device-callable routines from within \ac{GPU} kernels. Device contexts
+shall not be created or destroyed from within \ac{GPU} kernels.
 
 Using a device context for GPU-aware (host-initiated) operations, or using a
 non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for GPU-centric
