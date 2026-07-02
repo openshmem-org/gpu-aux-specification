@@ -497,7 +497,7 @@ specification.
 \LibHandleRef{SHMEM\_DEVICE\_TEAM\_WORLD} &
 Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team containing all
 \acp{PE} in the \openshmem program that have a valid PE-to-GPU association.
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} shall be a subset of or equal to
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} shall have the same set of member \acp{PE} as
 \CONST{SHMEM\_TEAM\_WORLD}. This handle may be used in collective operations and
 team-based communication routines that operate on the \ac{GPU} symmetric heap. \\
 \hline
