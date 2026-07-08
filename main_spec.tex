@@ -186,6 +186,16 @@ initialization.
 \ac{GPU} interfaces defined herein. All \acp{PE} in the \openshmem program shall
 have a valid PE-to-GPU association to use these interfaces.
 
+\subsection{Memory Domains}
+Accessing local or remote GPU-attached memory can require different actions and
+routing paths than accessing host-attached memory, and this motivates a semantic
+distinction between the two memory spaces. Thus, OpenSHMEM separates CPU-attached
+memory and GPU-attached memory into separate "memory domains". Each PE may be
+associated with a CPU and a GPU memory domain, and each domain can extend to multiple PEs.
+This means that, depending on the system, both CPU and GPU memory domains may be
+directly accessed (i.e., return a non-null value for \FUNC{shmem\_ptr} or
+\FUNC{shmem\_team\_ptr}) by CPU or GPU threads on a local PE or a remote PE.
+
 \subsection{GPU Symmetric Heap}\label{subsec:gpu_symmetric_heap}
 
 The \ac{GPU} symmetric heap is distributed across \acp{PE}, with each \ac{PE}'s
