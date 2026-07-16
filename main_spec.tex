@@ -1486,6 +1486,42 @@ return value.
 }
 \end{apidefinition}
 
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program launches a device kernel that queries the calling \ac{PE}
+number and the total number of \acp{PE} from within the kernel using
+\FUNC{shmemg\_my\_pe} and \FUNC{shmemg\_n\_pes}, writing the results to a
+symmetric buffer in the \ac{GPU} symmetric heap.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void query_kernel(int *out) {
+    out[0] = shmemg_my_pe();
+    out[1] = shmemg_n_pes();
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    /* out resides in the GPU symmetric heap so the kernel can write to it */
+    int *out = (int *)shmemg_malloc(2 * sizeof(int));
+
+    query_kernel<<<1, 1>>>(out);
+    /* cudaDeviceSynchronize(); */
+
+    /* out[0] == shmem_my_pe(), out[1] == shmem_n_pes() */
+
+    shmemg_free(out);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
+
 \subsection{Context Management}\label{subsec:gc_context}
 
 Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
@@ -1512,6 +1548,57 @@ not be created or destroyed from within \ac{GPU} kernels.
 Using a device context for GPU-aware (host-initiated) operations, or using a
 non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for GPU-centric
 operations, results in \textbf{undefined behavior}.
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program creates an explicit device context on the host from
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} with the \CONST{SHMEM\_DEVICE\_CTX} option,
+passes it to a device kernel that issues a context-qualified put and completes it
+with \FUNC{shmemg\_ctx\_quiet}, and destroys the context on the host. Device
+contexts are created and destroyed only on the host.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void put_on_ctx(shmem_ctx_t ctx, int *dest,
+                           const int *src, int peer) {
+    shmemg_ctx_putmem(ctx, dest, src, sizeof(int), peer);
+    shmemg_ctx_quiet(ctx);
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    int me   = shmem_my_pe();
+    int npes = shmem_n_pes();
+    int peer = (me + 1) % npes;
+
+    /* Device contexts must be created on the host from the device team. */
+    shmem_ctx_t ctx;
+    if (shmem_team_create_ctx(SHMEM_DEVICE_TEAM_WORLD,
+                              SHMEM_DEVICE_CTX, &ctx) != 0)
+        shmem_global_exit(1);
+
+    int *dest = (int *)shmemg_malloc(sizeof(int));
+    int *src  = (int *)shmemg_malloc(sizeof(int));
+    /* Initialize src on the GPU (vendor-specific) */
+
+    put_on_ctx<<<1, 1>>>(ctx, dest, src, peer);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();
+
+    shmem_ctx_destroy(ctx);   /* destroy the device context on the host */
+    shmemg_free(src);
+    shmemg_free(dest);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
 
 \subsection{Communication Operations}\label{subsec:gc_comm_ops}
 
@@ -1767,6 +1854,48 @@ data has been delivered to the \VAR{dest} array on the local \ac{PE}.
 None.
 }
 \end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+In the following program each \ac{PE} launches a device kernel that puts one
+element into its right neighbor's symmetric buffer with \FUNC{shmemg\_putmem}
+and completes the transfer with \FUNC{shmemg\_quiet}. Both the source and
+destination operands reside in the \ac{GPU} symmetric heap.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void ring_put(long *dest, const long *src, int peer) {
+    shmemg_putmem(dest, src, sizeof(long), peer);
+    shmemg_quiet();  /* wait for the put to complete remotely */
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    int me   = shmem_my_pe();
+    int npes = shmem_n_pes();
+    int peer = (me + 1) % npes;
+
+    long *dest = (long *)shmemg_malloc(sizeof(long));
+    long *src  = (long *)shmemg_malloc(sizeof(long));
+    /* Initialize src on the GPU (vendor-specific), e.g., *src = me */
+
+    ring_put<<<1, 1>>>(dest, src, peer);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();  /* dest now holds the left neighbor's value */
+
+    shmemg_free(src);
+    shmemg_free(dest);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
 
 \subsubsection{Atomic Memory Operations (AMO)}\label{subsec:gc_amo}
 
@@ -2043,6 +2172,46 @@ None.
 }
 \end{apidefinition}
 
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program has every \ac{PE} atomically fetch-and-add one to a shared
+counter that lives on \ac{PE}~0 using \FUNC{shmemg\_long\_atomic\_fetch\_add},
+obtaining a unique ticket value. The counter and the fetched result reside in the
+\ac{GPU} symmetric heap.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void take_ticket(long *counter, long *ticket, int root) {
+    /* Returns this PE's unique ticket; a non-fetching update would
+       instead use shmemg_long_atomic_add(counter, 1, root). */
+    *ticket = shmemg_long_atomic_fetch_add(counter, 1, root);
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    long *counter = (long *)shmemg_calloc(1, sizeof(long));
+    long *ticket  = (long *)shmemg_malloc(sizeof(long));
+
+    shmem_barrier_all();  /* counter initialized to 0 on every PE */
+
+    take_ticket<<<1, 1>>>(counter, ticket, 0);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();
+
+    shmemg_free(ticket);
+    shmemg_free(counter);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
+
 \subsubsection{Signaling Operations}\label{subsec:gc_signaling}
 
 The signaling routines in this section copy data from a contiguous local data
@@ -2219,6 +2388,64 @@ The value of the signal data object at \VAR{sig\_addr} on the calling \ac{PE}.
 }
 \end{apidefinition}
 
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program delivers a message from \ac{PE}~0 to \ac{PE}~1 with
+\FUNC{shmemg\_putmem\_signal}, which writes the payload and then atomically
+updates a remote signal object. \ac{PE}~1 polls its local signal with
+\FUNC{shmemg\_signal\_fetch} until the arrival is observed. All operands reside
+in the \ac{GPU} symmetric heap.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+#include <stdint.h>
+
+#define MSG_LEN 256
+
+__global__ void producer(char *dest, const char *src,
+                         uint64_t *sig, int peer) {
+    shmemg_putmem_signal(dest, src, MSG_LEN, sig, 1,
+                         SHMEM_SIGNAL_SET, peer);
+    shmemg_quiet();
+}
+
+__global__ void consumer(const uint64_t *sig) {
+    while (shmemg_signal_fetch(sig) == 0) { /* busy-wait for arrival */ }
+    /* dest now holds the delivered message */
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    int me = shmem_my_pe();
+
+    char     *dest = (char *)shmemg_malloc(MSG_LEN);
+    char     *src  = (char *)shmemg_malloc(MSG_LEN);
+    uint64_t *sig  = (uint64_t *)shmemg_calloc(1, sizeof(uint64_t));
+    /* Initialize src on the GPU (vendor-specific) */
+
+    shmem_barrier_all();
+
+    if (me == 0)
+        producer<<<1, 1>>>(dest, src, sig, 1);
+    else if (me == 1)
+        consumer<<<1, 1>>>(sig);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();
+
+    shmemg_free(sig);
+    shmemg_free(src);
+    shmemg_free(dest);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
+
 \subsubsection{Point-to-Point Synchronization}\label{subsec:gc_p2p}
 
 The point-to-point synchronization routines block or test until a symmetric data
@@ -2331,6 +2558,56 @@ The value of the signal data object at \VAR{sig\_addr} that satisfies the wait
 condition.
 }
 \end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program performs a point-to-point handshake. \ac{PE}~0 sets a flag
+on \ac{PE}~1 with a put, and \ac{PE}~1 blocks inside its kernel with
+\FUNC{shmemg\_long\_wait\_until} until the flag is observed. A nonblocking
+\FUNC{shmemg\_long\_test} could be used instead to poll without blocking.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void notifier(long *flag, const long *val, int peer) {
+    shmemg_putmem(flag, val, sizeof(long), peer);
+    shmemg_quiet();
+}
+
+__global__ void waiter(long *flag) {
+    shmemg_long_wait_until(flag, SHMEM_CMP_EQ, 1);
+    /* the flag has been set by PE 0 */
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    int me = shmem_my_pe();
+
+    long *flag = (long *)shmemg_calloc(1, sizeof(long));
+    long *val  = (long *)shmemg_malloc(sizeof(long));
+    /* Initialize *val = 1 on the GPU (vendor-specific) */
+
+    shmem_barrier_all();
+
+    if (me == 0)
+        notifier<<<1, 1>>>(flag, val, 1);
+    else if (me == 1)
+        waiter<<<1, 1>>>(flag);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();
+
+    shmemg_free(val);
+    shmemg_free(flag);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
 
 \subsubsection{Memory Ordering}\label{subsec:gc_ordering}
 
@@ -2523,6 +2800,51 @@ invalid, the behavior is undefined.
 Zero on successful synchronization; otherwise, a nonzero value.
 }
 \end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program launches a device kernel in which every \ac{PE} puts a
+value to its right neighbor, completes the transfer with \FUNC{shmemg\_quiet},
+and then joins a device-wide barrier over \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
+with \FUNC{shmemg\_sync\_all}. \FUNC{shmemg\_team\_sync} may be used to
+synchronize a subset team instead.
+
+\begin{lstlisting}[style=SourceListingsDefault]
+#include <shmem.h>
+#include <shmemg.h>
+
+__global__ void put_and_sync(long *dest, const long *src, int peer) {
+    shmemg_putmem(dest, src, sizeof(long), peer);
+    shmemg_quiet();     /* complete the remote update before synchronizing */
+    shmemg_sync_all();  /* barrier over SHMEM_DEVICE_TEAM_WORLD */
+    /* every PE's dest now holds its neighbor's contribution */
+}
+
+int main(void) {
+    int provided;
+    shmem_init_thread(SHMEM_THREAD_SINGLE | SHMEM_DEVICE_KERNEL_INIT,
+                      &provided);
+    if (!(provided & SHMEM_DEVICE_KERNEL_INIT))
+        shmem_global_exit(1);
+
+    int me   = shmem_my_pe();
+    int npes = shmem_n_pes();
+    int peer = (me + 1) % npes;
+
+    long *dest = (long *)shmemg_malloc(sizeof(long));
+    long *src  = (long *)shmemg_malloc(sizeof(long));
+    /* Initialize src on the GPU (vendor-specific) */
+
+    put_and_sync<<<1, 1>>>(dest, src, peer);
+    /* cudaDeviceSynchronize(); */
+
+    shmem_barrier_all();
+
+    shmemg_free(src);
+    shmemg_free(dest);
+    shmem_finalize();
+    return 0;
+}
+\end{lstlisting}
 
 \clearpage
 
