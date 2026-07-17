@@ -2828,17 +2828,17 @@ all \acp{PE} in \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have arrived.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_sync_all(void);
+__device__ int shmemg_sync_all(void);
 \end{Csynopsis}
 
 Thread group variant:
 \begin{CsynopsisCol}
-__device__ void shmemg_sync_all_tg(void);
+__device__ int shmemg_sync_all_tg(void);
 \end{CsynopsisCol}
 
 Hardware thread group variant:
 \begin{CsynopsisCol}
-__device__ void shmemg_sync_all_htg(void);
+__device__ int shmemg_sync_all_htg(void);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
@@ -2858,11 +2858,11 @@ synchronizing, \FUNC{shmemg\_quiet} shall be called prior to
 \FUNC{shmemg\_sync\_all}.
 
 \FUNC{shmemg\_sync\_all} is equivalent to calling \FUNC{shmemg\_team\_sync} on
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and returns the same value.
 }
 
 \apireturnvalues{
-None.
+Zero on successful synchronization; otherwise, a nonzero value.
 }
 \end{apidefinition}
 
