@@ -1783,6 +1783,17 @@ participating threads shall call the routine with the same arguments. If any
 thread in the group does not participate, or if arguments differ across threads,
 the behavior is undefined.
 
+The atomic memory operations (\cref{subsec:gc_amo}) and point-to-point
+synchronization routines (\cref{subsec:gc_p2p}) are provided as typed variants,
+following the naming convention of the \openshmem 1.6 specification. In the name
+of a typed routine, \TYPENAME{} is the type-name component that identifies the
+operand type, while \TYPE{} is the corresponding C type used in the routine
+signature. The supported types and the \TYPE{}-to-\TYPENAME{} correspondence are
+those defined by the \openshmem 1.6 specification for the relevant operation
+category. For example, the type \TYPE{} \KEYWORD{unsigned long long} has
+\TYPENAME{} \texttt{ulonglong}, giving rise to routines such as
+\FUNC{shmemg\_ulonglong\_atomic\_add}.
+
 \subsubsection{Remote Memory Access (RMA)}\label{subsec:gc_rma}
 
 The \ac{RMA} routines in this section transfer data between a local data object
@@ -2177,7 +2188,8 @@ __device__ void shmemg_ctx_TYPENAME_atomic_xor(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 \end{Csynopsis}
 
-where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6.
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6, and
+\TYPENAME{} is the corresponding type-name component of the routine name.
 
 \begin{apiarguments}
 \apiargument{IN}{ctx}{A context handle. When not provided, the operation is
@@ -2268,7 +2280,8 @@ __device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_xor(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 \end{Csynopsis}
 
-where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6.
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6, and
+\TYPENAME{} is the corresponding type-name component of the routine name.
 
 \begin{apiarguments}
 \apiargument{IN}{ctx}{A context handle. When not provided, the operation is
@@ -2370,7 +2383,8 @@ __device__ void shmemg_ctx_TYPENAME_atomic_fetch_xor_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, TYPE value, int pe);
 \end{Csynopsis}
 
-where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6.
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6, and
+\TYPENAME{} is the corresponding type-name component of the routine name.
 
 \begin{apiarguments}
 \apiargument{IN}{ctx}{A context handle. When not provided, the operation is
@@ -2719,7 +2733,8 @@ __device__ void shmemg_TYPENAME_wait_until_htg(TYPE *ivar, int cmp,
 \end{CsynopsisCol}
 
 where \TYPE{} is one of the point-to-point synchronization types defined in
-\openshmem 1.6.
+\openshmem 1.6, and \TYPENAME{} is the corresponding type-name component of the
+routine name.
 
 \begin{apiarguments}
 \apiargument{IN}{ivar}{Symmetric address of the source data object. Shall reside
@@ -2766,7 +2781,8 @@ __device__ int shmemg_TYPENAME_test_htg(TYPE *ivar, int cmp, TYPE cmp_value);
 \end{CsynopsisCol}
 
 where \TYPE{} is one of the point-to-point synchronization types defined in
-\openshmem 1.6.
+\openshmem 1.6, and \TYPENAME{} is the corresponding type-name component of the
+routine name.
 
 \begin{apiarguments}
 \apiargument{IN}{ivar}{Symmetric address of the source data object. Shall reside
