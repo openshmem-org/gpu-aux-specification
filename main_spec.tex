@@ -1205,6 +1205,27 @@ The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
 
 Host-initiated memory ordering routines operate at single-thread granularity.
 
+Ordering and completion in the presence of GPU-attached memory are defined with
+respect to \emph{memory domains}. Each \ac{PE} exposes two memory domains: the
+default symmetric heap in host memory and the \ac{GPU} symmetric heap in device
+memory, as shown in \cref{fig:mem-domains}. \FUNC{shmem\_fence} orders the
+delivery of operations to a given \ac{PE} within a single memory domain, whereas
+\FUNC{shmem\_quiet} completes operations and makes them visible across both
+memory domains at all \acp{PE}. \Cref{fig:fence-quiet} contrasts the two
+routines.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics{figures/fig-mem-domains.pdf}
+\caption{Each PE exposes two independent \emph{memory domains}: the default
+symmetric heap in host (CPU-attached) memory and the GPU symmetric heap in device
+(GPU-attached) memory. When GPU-aware communication is enabled, ordering and
+completion are defined per memory domain: \FUNC{shmem\_fence} orders delivery
+within one domain at a given PE, while \FUNC{shmem\_quiet} completes operations
+and makes them visible across both domains at all PEs.}
+\label{fig:mem-domains}
+\end{figure}
+
 \subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
 
 Ensures ordering of delivery of put, non-blocking get, \ac{AMO}, memory store, and put-with-signal
@@ -1316,6 +1337,19 @@ a single memory domain and does not guarantee cross-domain visibility.
 }
 \end{apidefinition}
 
+\begin{figure}[!ht]
+\centering
+\includegraphics{figures/fig-fence-quiet.pdf}
+\caption{Memory-domain-based ordering and completion. \FUNC{shmem\_fence}
+guarantees that operations issued before it are delivered before operations
+issued after it \emph{when they target the same memory domain at the same PE}
+(P1 before P2). It provides no ordering between operations that target different
+memory domains at the same PE (P1 and P3), and none across different PEs.
+\FUNC{shmem\_quiet} completes all prior operations and makes them visible to all
+PEs across both memory domains.}
+\label{fig:fence-quiet}
+\end{figure}
+
 \subsubsection{SHMEM\_PUT\_SIGNAL}\label{subsec:ga_put_signal_ordering}
 
 Copies data from a contiguous local data object to a data object on a specified
@@ -1376,6 +1410,18 @@ delivery and signal update as a single atomic-like operation.
 independent operations.
 }
 \end{apidefinition}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics{figures/fig-put-signal-xdomain.pdf}
+\caption{Cross-domain ordering of \FUNC{shmem\_put\_signal}. A single
+put-with-signal operation guarantees that the data written to \textit{dest} is
+delivered before the signal update at \textit{sig\_addr} becomes visible, even
+when \textit{dest} and \textit{sig\_addr} reside in different memory domains at
+the target PE. Two independent operations ordered with \FUNC{shmem\_fence} do
+not provide this cross-domain guarantee.}
+\label{fig:put-signal-xdomain}
+\end{figure}
 
 \subsubsection{Global Synchronization}\label{subsec:ga_barrier}
 
@@ -2647,6 +2693,12 @@ The memory ordering routines order or complete outstanding put, \ac{AMO}, and
 put-with-signal operations issued from within a \ac{GPU} device kernel.
 Device-initiated memory ordering routines are provided at thread, thread group,
 and hardware thread group granularities.
+
+The memory-domain model of ordering and completion illustrated in
+\cref{fig:mem-domains,fig:fence-quiet} applies equally to the device-initiated
+routines: \FUNC{shmemg\_fence} orders delivery within a single memory domain at
+a given \ac{PE}, while \FUNC{shmemg\_quiet} completes operations and makes them
+visible across both memory domains at all \acp{PE}.
 
 \subsubsubsection{\textbf{SHMEMG\_FENCE}}\label{subsec:gc_fence}
 

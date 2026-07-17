@@ -127,7 +127,7 @@
 % Listings styles
 %
 
-\newcommand{\ListingsParamStyle}{\bfseries\itshape\color{CadetBlue}}
+\newcommand{\ListingsParamStyle}{\bfseries\itshape}
 
 \definecolor{DarkGreen}{rgb}{0, 0.25, 0}
 
@@ -142,7 +142,7 @@
   frame=single,
   classoffset=0,
   keywords={\#include, \#pragma, \#if, \#ifdef, \#else, \#endif},
-  keywordstyle=\bfseries\color{CadetBlue},
+  keywordstyle=\bfseries,
   classoffset=1,
   keywords={
     if, else, for, while, do, return, break, continue,
@@ -150,7 +150,7 @@
     sizeof, typedef, struct, union,
     switch, case, default, goto,
   },
-  keywordstyle=\bfseries\color{Orchid},
+  keywordstyle=\bfseries,
   classoffset=2,
   keywords={
     __device__, _Thread_local, _Noreturn,
@@ -161,15 +161,15 @@
     shmem_ctx_t, shmem_team_t, shmem_team_config_t,
     FILE,
   },
-  keywordstyle=\color{DarkGreen},
+  keywordstyle=\bfseries,
   classoffset=3,
   keywords={NULL},
-  keywordstyle=\color{MidnightBlue},
+  keywordstyle=\bfseries,
   classoffset=4,
   keywords={TYPE, TYPENAME, SIZE},
   keywordstyle=\ListingsParamStyle,
-  commentstyle=\itshape\color{BrickRed},
-  stringstyle=\color{DarkOrchid},
+  commentstyle=\itshape,
+  stringstyle=\color{black},
   backgroundcolor=\color{white},
 }
 
