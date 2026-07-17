@@ -2495,8 +2495,13 @@ int main(void) {
 \subsubsection{Point-to-Point Synchronization}\label{subsec:gc_p2p}
 
 The point-to-point synchronization routines block or test until a symmetric data
-object on the local \ac{PE} satisfies a specified condition. All routines in this
-section operate at single-thread granularity.
+object on the local \ac{PE} satisfies a specified condition.
+
+Each of these routines is also provided in thread group (\texttt{\_tg}) and
+hardware thread group (\texttt{\_htg}) variants, as defined in
+\cref{subsec:gc_comm_ops}. In these collective variants, all participating
+threads return together once the condition is satisfied, and any return value is
+the same across the group.
 
 The \VAR{ivar} or \VAR{sig\_addr} data object shall reside in the \ac{GPU}
 symmetric heap. Using local \ac{GPU} memory, local CPU memory, or memory from the
@@ -2511,6 +2516,18 @@ Blocks until a symmetric data object on the local \ac{PE} satisfies a condition.
 __device__ void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
     TYPE cmp_value);
 \end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+__device__ void shmemg_TYPENAME_wait_until_tg(TYPE *ivar, int cmp,
+    TYPE cmp_value);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+__device__ void shmemg_TYPENAME_wait_until_htg(TYPE *ivar, int cmp,
+    TYPE cmp_value);
+\end{CsynopsisCol}
 
 where \TYPE{} is one of the point-to-point synchronization types defined in
 \openshmem 1.6.
@@ -2549,6 +2566,16 @@ condition.
 __device__ int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
 \end{Csynopsis}
 
+Thread group variant:
+\begin{CsynopsisCol}
+__device__ int shmemg_TYPENAME_test_tg(TYPE *ivar, int cmp, TYPE cmp_value);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+__device__ int shmemg_TYPENAME_test_htg(TYPE *ivar, int cmp, TYPE cmp_value);
+\end{CsynopsisCol}
+
 where \TYPE{} is one of the point-to-point synchronization types defined in
 \openshmem 1.6.
 
@@ -2580,6 +2607,18 @@ Blocks until a local signal data object satisfies a condition.
 __device__ uint64_t shmemg_signal_wait_until(uint64_t *sig_addr,
     int cmp, uint64_t cmp_value);
 \end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+__device__ uint64_t shmemg_signal_wait_until_tg(uint64_t *sig_addr,
+    int cmp, uint64_t cmp_value);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+__device__ uint64_t shmemg_signal_wait_until_htg(uint64_t *sig_addr,
+    int cmp, uint64_t cmp_value);
+\end{CsynopsisCol}
 
 \begin{apiarguments}
 \apiargument{IN}{sig\_addr}{Local address of the remotely accessible signal
@@ -3312,8 +3351,14 @@ by these implementations.
 
 % GPU-Centric Point-to-Point Synchronization
 \index{shmemg\_TYPENAME\_wait\_until}
+\index{shmemg\_TYPENAME\_wait\_until\_tg}
+\index{shmemg\_TYPENAME\_wait\_until\_htg}
 \index{shmemg\_TYPENAME\_test}
+\index{shmemg\_TYPENAME\_test\_tg}
+\index{shmemg\_TYPENAME\_test\_htg}
 \index{shmemg\_signal\_wait\_until}
+\index{shmemg\_signal\_wait\_until\_tg}
+\index{shmemg\_signal\_wait\_until\_htg}
 \index{shmemg\_wait\_until}
 \index{shmemg\_test}
 
