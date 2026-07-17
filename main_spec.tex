@@ -543,7 +543,10 @@ selected by the \ac{PE} prior to library initialization. The allowed character
 suffixes are: \textbf{k} or \textbf{K} ($2^{10}$), \textbf{m} or \textbf{M}
 ($2^{20}$), \textbf{g} or \textbf{G} ($2^{30}$), \textbf{t} or \textbf{T}
 ($2^{40}$). For example, the string ``20m'' is equivalent to 20971520 bytes. An
-invalid value is an error. \\
+invalid value is an error. If no \ac{GPU} support is requested in
+\FUNC{shmem\_init\_thread} (neither \CONST{SHMEM\_DEVICE\_HOST\_INIT} nor
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}), no \ac{GPU} symmetric heap is created and
+this variable has no effect. \\
 \hline
 \EnvVarRef{SHMEM\_DEVICE\_MAX\_CTX} &
 Non-negative integer &
@@ -570,8 +573,31 @@ this and subsequent sections require that the \openshmem library has been
 initialized with GPU support by passing \CONST{SHMEM\_DEVICE\_HOST\_INIT},
 \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, or both to \FUNC{shmem\_init\_thread}, and
 that the corresponding capability was returned in \VAR{provided}. Calling any
-\texttt{shmemg\_} routine without the required GPU initialization results in
-\textbf{undefined behavior}.
+\texttt{shmemg\_} routine, or using a routine defined in \openshmem 1.6 with
+GPU-attached memory operands, without the required capability having been
+returned in \VAR{provided} results in \textbf{undefined behavior}.
+
+The capability required by each group of routines is summarized below.
+
+\begin{longtable}{|p{7.5cm}|p{7cm}|}
+\hline
+\textbf{Routine group} & \textbf{Required capability in \VAR{provided}} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Routine group} & \textbf{Required capability in \VAR{provided}} \\
+\hline
+\endhead
+\ac{GPU} symmetric heap management (\cref{sec:init_memmgmt}) &
+\CONST{SHMEM\_DEVICE\_HOST\_INIT} or \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} \\
+\hline
+GPU-aware communication (\cref{sec:gpu_aware}) &
+\CONST{SHMEM\_DEVICE\_HOST\_INIT} \\
+\hline
+GPU-centric communication (\cref{sec:gpu_centric}) &
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} \\
+\hline
+\end{longtable}
 
 \subsection{SHMEM\_INIT\_THREAD}\label{subsec:shmem_init_thread}
 
@@ -812,10 +838,12 @@ The \openshmem \ac{RMA}, \ac{AMO}, signaling, and collective routines defined in
 routine interfaces are unchanged. The tables below specify the allowed memory
 locations for each argument.
 
-The operations in this section are invoked from the host \ac{PE}. The \openshmem
-library shall have been initialized with \CONST{SHMEM\_DEVICE\_HOST\_INIT} and
-the corresponding capability shall have been returned in the \VAR{provided}
-argument of \FUNC{shmem\_init\_thread}.
+The operations in this section are invoked from the host \ac{PE}. Using the
+routines in this section with GPU-attached memory operands requires that the
+\openshmem library has been initialized with \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+and that the corresponding capability was returned in the \VAR{provided} argument
+of \FUNC{shmem\_init\_thread}. Doing so without \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+having been returned in \VAR{provided} results in \textbf{undefined behavior}.
 
 The following terms identify the memory locations referenced in this section:
 
