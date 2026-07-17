@@ -1829,6 +1829,47 @@ None.
 }
 \end{apidefinition}
 
+\subsubsubsection{\textbf{Single-Element Put}}\label{subsec:gc_p}
+
+Copies a single data element to a data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ void shmemg_TYPENAME_p(TYPE *dest, TYPE value, int pe);
+__device__ void shmemg_ctx_TYPENAME_p(shmem_ctx_t ctx, TYPE *dest,
+    TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard RMA types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object. Shall
+reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The value to be transferred to \VAR{dest}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_p} routines write \VAR{value} to the symmetric data object at
+address \VAR{dest} on \ac{PE} \VAR{pe}. The \VAR{value} argument is passed by
+value; no memory-location restriction applies to it. The routines return after
+\VAR{value} has been copied out on the local \ac{PE}. Delivery of \VAR{value}
+into the \VAR{dest} data object on the destination \ac{PE} may be ordered using
+\FUNC{shmemg\_fence} and completed using \FUNC{shmemg\_quiet}, as for other put
+operations.
+
+All \FUNC{shmemg\_p} routines operate at single-thread granularity. No thread
+group or hardware thread group variants are defined.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
 \subsubsubsection{\textbf{Blocking Get}}\label{subsec:gc_get}
 
 Copies a contiguous symmetric data object from a specified \ac{PE}.
@@ -1931,6 +1972,45 @@ data has been delivered to the \VAR{dest} array on the local \ac{PE}.
 
 \apireturnvalues{
 None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Single-Element Get}}\label{subsec:gc_g}
+
+Copies a single data element from a data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+__device__ TYPE shmemg_TYPENAME_g(const TYPE *source, int pe);
+__device__ TYPE shmemg_ctx_TYPENAME_g(shmem_ctx_t ctx,
+    const TYPE *source, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard RMA types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{IN}{source}{Symmetric address of the source data object. Shall reside
+in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_g} routines read the value of the symmetric data object at
+address \VAR{source} on \ac{PE} \VAR{pe} and return it to the calling \ac{GPU}
+thread. The routines return after the value has been delivered to the calling
+thread. The returned value is passed by value; no memory-location restriction
+applies to it.
+
+All \FUNC{shmemg\_g} routines operate at single-thread granularity. No thread
+group or hardware thread group variants are defined.
+}
+
+\apireturnvalues{
+The value of the symmetric data object at address \VAR{source} on \ac{PE}
+\VAR{pe}, of type \TYPE{}.
 }
 \end{apidefinition}
 
