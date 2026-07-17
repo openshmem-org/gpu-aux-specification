@@ -205,6 +205,71 @@ operations on symmetric objects within it from both the host and \ac{GPU}
 execution contexts. These routines follow the \ac{PGAS} programming model
 established by the \openshmem specification.
 
+\subsection{Memory Domains}\label{subsec:memory_domains}
+
+Because symmetric data may reside in either host-attached or GPU-attached memory,
+this specification distinguishes two \emph{memory domains}. A memory domain is
+the address space with respect to which the ordering, completion, and atomicity
+of \openshmem operations are defined. Each \ac{PE} that uses the GPU support
+defined herein exposes two distinct memory domains:
+
+\begin{description}
+\item[Default memory domain] The default symmetric heap, together with the
+symmetric static and global data objects defined by the \openshmem
+specification, residing in host (CPU-attached) memory.
+\item[\ac{GPU} memory domain] The \ac{GPU} symmetric heap, residing in the
+device (GPU-attached) memory of the \ac{GPU} associated with the \ac{PE}
+(\cref{subsec:pe_gpu_association}).
+\end{description}
+
+Private (non-symmetric) host or device memory belongs to neither memory domain
+and cannot be the remote target of an \openshmem operation.
+
+The two memory domains are independent. Operations issued to one memory domain
+are neither ordered nor completed with respect to operations issued to the other
+memory domain unless a completion routine such as \FUNC{shmem\_quiet} is called,
+or unless a routine explicitly provides cross-domain ordering, such as the
+put-with-signal routines. The corresponding ordering and completion rules are
+defined in \cref{subsec:gpu_aware_ordering} for GPU-aware operations and in
+\cref{subsec:gc_ordering} for GPU-centric operations.
+
+\textbf{Interaction with teams and atomicity domains:} Memory ordering and
+completion are tracked per memory domain and per communication context, while
+atomicity is defined per atomicity domain (\cref{subsec:atomicity_domains}). The
+predefined device teams \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} form atomicity domains that are independent
+of those rooted at the host teams \CONST{SHMEM\_TEAM\_WORLD} and
+\CONST{SHMEM\_TEAM\_SHARED}. The team \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}
+identifies the \acp{PE} that share a \ac{GPU} memory domain and can therefore
+directly load/store one another's \ac{GPU} symmetric heap objects
+(\cref{subsec:shmem_device_team_shared}). A communication context created with
+the \CONST{SHMEM\_DEVICE\_CTX} option operates on the \ac{GPU} memory domain;
+a context created without that option operates on the default memory domain.
+
+\textbf{Memory domains targeted by each operation type:} The following table
+summarizes which memory domains may be named by the operands of each class of
+operation.
+
+\begin{longtable}{|p{4.6cm}|p{9.9cm}|}
+\hline
+\textbf{Operation type} & \textbf{Memory domains that may be targeted} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Operation type} & \textbf{Memory domains that may be targeted} \\
+\hline
+\endhead
+CPU / host-initiated (\openshmem 1.6) & Default memory domain only. \\
+\hline
+GPU-aware (\cref{sec:gpu_aware}) & Default memory domain and \ac{GPU} memory
+domain; a single host-initiated routine may name operands in either domain. \\
+\hline
+GPU-centric (\cref{sec:gpu_centric}) & \ac{GPU} memory domain only; source,
+destination, and synchronization operands shall reside in the \ac{GPU} symmetric
+heap. \\
+\hline
+\end{longtable}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 5: Communication Model
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1217,9 +1282,10 @@ The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
 Host-initiated memory ordering routines operate at single-thread granularity.
 
 Ordering and completion in the presence of GPU-attached memory are defined with
-respect to \emph{memory domains}. Each \ac{PE} exposes two memory domains: the
-default symmetric heap in host memory and the \ac{GPU} symmetric heap in device
-memory, as shown in \cref{fig:mem-domains}. \FUNC{shmem\_fence} orders the
+respect to the two \emph{memory domains} exposed by each \ac{PE}---the default
+(host) memory domain and the \ac{GPU} (device) memory domain
+(\cref{subsec:memory_domains})---as shown in \cref{fig:mem-domains}.
+\FUNC{shmem\_fence} orders the
 delivery of operations to a given \ac{PE} within a single memory domain, whereas
 \FUNC{shmem\_quiet} completes operations and makes them visible across both
 memory domains at all \acp{PE}. \Cref{fig:fence-quiet} contrasts the two
