@@ -472,20 +472,6 @@ operations. This option may be combined with other context creation options
 defined in \openshmem 1.6, such as \CONST{SHMEM\_CTX\_SERIALIZED} or
 \CONST{SHMEM\_CTX\_PRIVATE}. \\
 \hline
-\LibConstRef{SHMEM\_DEVICE\_MALLOC\_HOST\_INIT} &
-Hint to \FUNC{shmem\_malloc\_with\_hints} that specifies the allocated memory
-from the \ac{GPU} symmetric heap will be used primarily by GPU-aware
-communication operations. The implementation may use this hint to optimize
-performance; if it cannot, the behavior shall be the same as an allocation
-without this hint. \\
-\hline
-\LibConstRef{SHMEM\_DEVICE\_MALLOC\_KERNEL\_INIT} &
-Hint to \FUNC{shmem\_malloc\_with\_hints} that specifies the allocated memory
-from the \ac{GPU} symmetric heap will be used primarily by GPU-centric
-communication operations invoked from within GPU kernels. The implementation may
-use this hint to optimize performance; if it cannot, the behavior shall be the
-same as an allocation without this hint. \\
-\hline
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
