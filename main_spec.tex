@@ -545,14 +545,6 @@ suffixes are: \textbf{k} or \textbf{K} ($2^{10}$), \textbf{m} or \textbf{M}
 ($2^{40}$). For example, the string ``20m'' is equivalent to 20971520 bytes. An
 invalid value is an error. \\
 \hline
-\EnvVarRef{SHMEM\_DEVICE\_MAX\_CTX} &
-Non-negative integer &
-Specifies the maximum number of device communication contexts that may be
-created per \ac{PE}. The implementation shall support at least the specified
-number of device contexts. If the value is zero, the implementation may limit
-device-initiated communication to the default device context
-(\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}). An invalid value is an error. \\
-\hline
 \end{longtable}
 
 \clearpage
