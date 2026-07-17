@@ -847,6 +847,11 @@ memory allocated by the GPU runtime (e.g., \texttt{cudaMalloc},
 \hline
 \end{longtable}
 
+Unless otherwise specified, passing an argument that refers to a memory location
+other than those permitted by the corresponding argument-constraint table
+results in \textbf{undefined behavior}. Routine-specific exceptions to this rule
+are stated explicitly where they apply.
+
 \subsection{Remote Memory Access (RMA)}\label{subsec:gpu_aware_rma}
 
 The \ac{RMA} routines defined in \openshmem 1.6 transfer data between a local
