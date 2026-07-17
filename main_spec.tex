@@ -2657,9 +2657,9 @@ int main(void) {
 
 \subsubsection{Memory Ordering}\label{subsec:gc_ordering}
 
-The memory ordering routines order or complete outstanding put, \ac{AMO}, and
-put-with-signal operations issued from within a \ac{GPU} device kernel. All
-memory ordering routines operate at single-thread granularity.
+The memory ordering routines order or complete outstanding put, \ac{AMO}, memory
+store, and put-with-signal operations issued from within a \ac{GPU} device
+kernel. All memory ordering routines operate at single-thread granularity.
 
 The memory-domain model of ordering and completion illustrated in
 \cref{fig:mem-domains,fig:fence-quiet} applies equally to the device-initiated
@@ -2669,8 +2669,8 @@ visible across both memory domains at all \acp{PE}.
 
 \subsubsubsection{\textbf{SHMEMG\_FENCE}}\label{subsec:gc_fence}
 
-Ensures ordering of delivery of put, \ac{AMO}, and put-with-signal operations to
-symmetric data objects.
+Ensures ordering of delivery of put, \ac{AMO}, memory store, and put-with-signal
+operations to symmetric data objects.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2685,11 +2685,15 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 
 \apidescription{
 Callable from within a \ac{GPU} kernel.
-\FUNC{shmemg\_fence} ensures ordering of delivery of put, \ac{AMO}, and
-put-with-signal operations to symmetric data objects. All such operations issued
-to a particular remote \ac{PE} on the given context prior to the call to
+\FUNC{shmemg\_fence} ensures ordering of delivery of put, \ac{AMO}, memory store,
+and put-with-signal operations to symmetric data objects. All such operations
+issued to a particular remote \ac{PE} on the given context prior to the call to
 \FUNC{shmemg\_fence} are guaranteed to be delivered before any subsequent such
 operations to the same \ac{PE} on the same context.
+
+Memory store operations include direct stores to \ac{GPU} symmetric heap objects
+on peer \acp{PE} that share a \ac{GPU} memory domain, performed through pointers
+returned by \FUNC{shmem\_ptr} or \FUNC{shmem\_team\_ptr}.
 
 \FUNC{shmemg\_fence} guarantees order of delivery, not completion. It does not
 guarantee order of delivery of nonblocking get operations or values fetched by
@@ -2712,8 +2716,8 @@ context. It does not ensure completion or global visibility; use
 
 \subsubsubsection{\textbf{SHMEMG\_QUIET}}\label{subsec:gc_quiet}
 
-Waits for completion of all outstanding put, \ac{AMO}, and put-with-signal
-operations to symmetric data objects.
+Waits for completion of all outstanding put, \ac{AMO}, memory store,
+put-with-signal, and nonblocking operations to symmetric data objects.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -2728,15 +2732,13 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 
 \apidescription{
 Callable from within a \ac{GPU} kernel.
-\FUNC{shmemg\_quiet} ensures completion of all outstanding put, \ac{AMO}, and
-put-with-signal operations to symmetric data objects issued by the calling
-\ac{GPU} thread on the given context. All such operations are guaranteed to be
-complete and visible to all \acp{PE} when \FUNC{shmemg\_quiet} returns.
-
-\FUNC{shmemg\_quiet} also guarantees that any nonblocking operations initiated on
-the given context have fully completed. In particular, the \VAR{fetch} data
-object of a nonblocking fetching \ac{AMO} and the \VAR{dest} data object of a
-nonblocking get contain the fetched values upon return.
+\FUNC{shmemg\_quiet} ensures completion of all outstanding put, \ac{AMO}, memory
+store, put-with-signal, and nonblocking operations to symmetric data objects
+issued by the calling \ac{GPU} thread on the given context. When
+\FUNC{shmemg\_quiet} returns, all such operations are complete and visible to all
+\acp{PE}; in particular, the \VAR{dest} data object of a nonblocking get and the
+\VAR{fetch} data object of a nonblocking fetching \ac{AMO} contain the fetched
+values upon return.
 
 If \VAR{ctx} has the value \CONST{SHMEM\_CTX\_INVALID}, no operation is
 performed.
