@@ -185,6 +185,16 @@ initialization.
 \ac{GPU} interfaces defined herein. All \acp{PE} in the \openshmem program shall
 have a valid PE-to-GPU association before using these interfaces.
 
+\subsection{Memory Domains}
+Accessing local or remote GPU-attached memory can require different actions and
+routing paths than accessing host-attached memory, and this motivates a semantic
+distinction between the two memory spaces. Thus, OpenSHMEM separates CPU-attached
+memory and GPU-attached memory into separate "memory domains". Each PE may be
+associated with a CPU and a GPU memory domain, and each domain can extend to multiple PEs.
+This means that, depending on the system, both CPU and GPU memory domains may be
+directly accessed (i.e., return a non-null value for \FUNC{shmem\_ptr} or
+\FUNC{shmem\_team\_ptr}) by CPU or GPU threads on a local PE or a remote PE.
+
 \subsection{GPU Symmetric Heap}\label{subsec:gpu_symmetric_heap}
 
 The \ac{GPU} symmetric heap is distributed across \acp{PE}, with each \ac{PE}'s
@@ -1197,8 +1207,8 @@ Host-initiated memory ordering routines operate at single-thread granularity.
 
 \subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
 
-Ensures ordering of delivery of put, \ac{AMO}, memory store, and put-with-signal
-operations on symmetric data objects when GPU-aware communication is enabled.
+Ensures ordering of delivery of put, non-blocking get, \ac{AMO}, memory store, and put-with-signal
+operations on symmetric data objects in the same memory domain when GPU-aware communication is enabled.
 
 \begin{apidefinition}
 \begin{Csynopsis}
@@ -1215,9 +1225,9 @@ the default context.}
 \apidescription{
 The \FUNC{shmem\_fence} routine ensures ordering of delivery of put, \ac{AMO},
 memory store, and put-with-signal operations on symmetric data objects. All such
-operations on symmetric data objects issued to a particular \ac{PE} on the given
+operations on symmetric data objects issued to a memory domain on a particular \ac{PE} on the given
 context prior to the call to \FUNC{shmem\_fence} are guaranteed to be delivered
-before any subsequent such operations to the same \ac{PE} on the same context.
+before any subsequent such operations to the same domain on the same \ac{PE} on the same context.
 \FUNC{shmem\_fence} guarantees order of delivery, not completion. It does not
 guarantee order of delivery of nonblocking get or values fetched by nonblocking
 \ac{AMO} routines.
@@ -1306,7 +1316,7 @@ a single memory domain and does not guarantee cross-domain visibility.
 }
 \end{apidefinition}
 
-\subsubsection{SHMEM\_PUT\_SIGNAL (Cross-Domain Ordering)}\label{subsec:ga_put_signal_ordering}
+\subsubsection{SHMEM\_PUT\_SIGNAL}\label{subsec:ga_put_signal_ordering}
 
 Copies data from a contiguous local data object to a data object on a specified
 \ac{PE} and subsequently updates a remote flag to signal completion. The
