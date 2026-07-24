@@ -120,7 +120,7 @@ Implementation of these extensions is optional. An \openshmem implementation may
 support GPU-aware communication, GPU-centric communication, both, or neither.
 Applications may query implementation capabilities at runtime.
 
-Applications that do not utilize GPU-attached memory buffers or the interfaces
+Applications that do not use GPU-attached memory buffers or the interfaces
 defined herein shall continue to execute correctly.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,8 +138,7 @@ The following are defined:
   \ac{GPU} execution contexts (\ac{GPU} kernels)
 \item Semantics for data movement, atomic memory operations, and synchronization
   involving GPU-attached symmetric memory
-\item Query interfaces for discovering implementation capabilities and symmetric
-  memory object properties
+\item Runtime capability reporting via \FUNC{shmem\_init\_thread}
 \item Requirements for memory ordering and coherence when both the default and
   \ac{GPU} symmetric heaps are in use
 \end{itemize}
@@ -169,7 +168,7 @@ symmetric heap defined by the \openshmem specification.
 \subsection{Processing Elements and GPU Association}\label{subsec:pe_gpu_association}
 
 The concept of a processing element (\ac{PE}) is defined by the \openshmem
-specification. Each \ac{PE} that utilizes the GPU support defined by this
+specification. Each \ac{PE} that uses the GPU support defined by this
 specification shall be associated with exactly one \ac{GPU}. The association
 between a \ac{PE} and its \ac{GPU} shall be established during initialization of
 the \openshmem library and shall remain fixed for the duration of the program.
@@ -184,7 +183,7 @@ initialization.
 \textbf{Constraint:} A \ac{PE} shall not be associated with more than one
 \ac{GPU}. A \ac{PE} that has no associated \ac{GPU} shall not invoke the
 \ac{GPU} interfaces defined herein. All \acp{PE} in the \openshmem program shall
-have a valid PE-to-GPU association to use these interfaces.
+have a valid PE-to-GPU association before using these interfaces.
 
 \subsection{GPU Symmetric Heap}\label{subsec:gpu_symmetric_heap}
 
@@ -436,18 +435,22 @@ defined by the \openshmem 1.6 specification.
 \endhead
 \LibConstRef{SHMEM\_DEVICE\_HOST\_INIT} &
 Option to \FUNC{shmem\_init\_thread} that requests GPU-aware communication
-support. When this option is provided, the implementation shall establish the
-PE-to-GPU association and prepare the runtime for GPU-aware operations on the
-\ac{GPU} symmetric heap. An implementation may support
-\CONST{SHMEM\_DEVICE\_HOST\_INIT}, \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or
-neither. \\
+support. When this option is provided, the implementation shall prepare the
+runtime for GPU-aware operations on the \ac{GPU} symmetric heap. Any requested
+GPU support option establishes the PE-to-GPU association and initializes the
+\ac{GPU} symmetric heap, as described in \FUNC{shmem\_init\_thread}. An
+implementation may support \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or neither. \\
 \hline
 \LibConstRef{SHMEM\_DEVICE\_KERNEL\_INIT} &
 Option to \FUNC{shmem\_init\_thread} that requests GPU-centric communication
 support. When this option is provided, the implementation shall prepare the
-runtime for communication operations invoked from within GPU kernels. An
-implementation may support \CONST{SHMEM\_DEVICE\_HOST\_INIT},
-\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or neither. \\
+runtime for communication operations invoked from within GPU kernels. Any
+requested GPU support option establishes the PE-to-GPU association and
+initializes the \ac{GPU} symmetric heap, as described in
+\FUNC{shmem\_init\_thread}. An implementation may support
+\CONST{SHMEM\_DEVICE\_HOST\_INIT}, \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or
+neither. \\
 \hline
 \LibConstRef{SHMEM\_DEVICE\_CTX} &
 Context creation option that specifies the communication context shall support
@@ -497,7 +500,7 @@ specification.
 \LibHandleRef{SHMEM\_DEVICE\_TEAM\_WORLD} &
 Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team containing all
 \acp{PE} in the \openshmem program that have a valid PE-to-GPU association.
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} shall be a subset of or equal to
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} shall have the same set of member \acp{PE} as
 \CONST{SHMEM\_TEAM\_WORLD}. This handle may be used in collective operations and
 team-based communication routines that operate on the \ac{GPU} symmetric heap. \\
 \hline
@@ -521,7 +524,7 @@ used for GPU-aware operations. \\
 \section{Environment Variables}\label{sec:environment_variables}
 
 The \openshmem GPU specification provides a set of environment variables that
-allows users to configure GPU-related aspects of the \openshmem implementation.
+allow users to configure GPU-related aspects of the \openshmem implementation.
 These variables supplement the environment variables defined by the \openshmem
 1.6 specification. Implementations are free to define additional GPU-related
 environment variables.
@@ -562,8 +565,9 @@ device-initiated communication to the default device context
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Initialization and Memory Management}\label{sec:init_memmgmt}
 
-The routines in this section provide initialization, memory management, and
-query operations on the \ac{GPU} symmetric heap.
+The routines in this section provide initialization and memory management for the
+\ac{GPU} symmetric heap. Runtime capability reporting is handled by
+\FUNC{shmem\_init\_thread}.
 
 \textbf{Prerequisite:} Except for \FUNC{shmem\_init\_thread}, all routines in
 this and subsequent sections require that the \openshmem library has been
@@ -605,12 +609,13 @@ both of the following constants, combined with the thread level using bitwise OR
 \end{itemize}
 
 \FUNC{shmem\_init\_thread} is extended to accept GPU support options in the
-\VAR{requested} argument. When \CONST{SHMEM\_DEVICE\_HOST\_INIT} is included in
+\VAR{requested} argument. When any GPU support option is included in
 \VAR{requested}, the implementation shall establish the PE-to-GPU association and
-initialize the \ac{GPU} symmetric heap for GPU-aware communication. When
-\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is included, the implementation shall
-additionally prepare the runtime for GPU-centric communication operations
-invoked from within GPU kernels.
+initialize the \ac{GPU} symmetric heap. When \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+is included in \VAR{requested}, the implementation shall prepare the runtime for
+GPU-aware communication. When \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is included in
+\VAR{requested}, the implementation shall prepare the runtime for GPU-centric
+communication operations invoked from within GPU kernels.
 
 The \VAR{provided} argument returns the thread level and GPU support actually
 provided by the implementation. The GPU support bits in \VAR{provided} shall
@@ -807,10 +812,10 @@ None.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{GPU-Aware Communication}\label{sec:gpu_aware}
 
-The \openshmem \ac{RMA}, \ac{AMO}, signaling, and collective routines defined in
-\openshmem 1.6 may be used with GPU-attached memory buffers as operands. The
-routine interfaces are unchanged. The tables below specify the allowed memory
-locations for each argument.
+The \openshmem \ac{RMA}, \ac{AMO}, signaling, point-to-point synchronization, and
+collective routines defined in \openshmem 1.6 may be used with GPU-attached
+memory buffers as operands. The routine interfaces are unchanged. The tables
+below specify the allowed memory locations for each argument.
 
 The operations in this section are invoked from the host \ac{PE}. The \openshmem
 library shall have been initialized with \CONST{SHMEM\_DEVICE\_HOST\_INIT} and
@@ -1047,7 +1052,7 @@ method for reading the signal object.
 \subsubsection{Put-with-Signal}\label{subsec:ga_put_signal}
 
 Copies data from a contiguous local data object to a data object on a specified
-\ac{PE} and subsequently update a remote flag to signal completion.
+\ac{PE} and subsequently updates a remote flag to signal completion.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
 \hline
@@ -1068,7 +1073,7 @@ location restriction applies.
 \subsubsection{Nonblocking Put-with-Signal}\label{subsec:ga_put_signal_nbi}
 
 Copies data from a contiguous local data
-object to a data object on a specified \ac{PE} and subsequently update a remote
+object to a data object on a specified \ac{PE} and subsequently updates a remote
 flag to signal completion.
 
 \begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
@@ -1188,6 +1193,8 @@ The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
 
 \subsection{Memory Ordering}\label{subsec:gpu_aware_ordering}
 
+Host-initiated memory ordering routines operate at single-thread granularity.
+
 \subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
 
 Ensures ordering of delivery of put, \ac{AMO}, memory store, and put-with-signal
@@ -1292,7 +1299,7 @@ None.
 \apinotes{
 There is a subtle difference between \FUNC{shmem\_fence} and
 \FUNC{shmem\_quiet}, in that \FUNC{shmem\_quiet} guarantees completion of all
-operations on symmetric data objects which makes the updates visible to all other
+operations on symmetric data objects, making the updates visible to all other
 \acp{PE} across all memory domains, including the \ac{GPU} symmetric heap and the
 default symmetric heap. \FUNC{shmem\_fence} provides only per-PE ordering within
 a single memory domain and does not guarantee cross-domain visibility.
@@ -1408,7 +1415,8 @@ ensure completion of remote memory updates issued through \openshmem routines.
 \section{GPU-Centric Communication}\label{sec:gpu_centric}
 
 This section defines routines that shall be invoked from within \ac{GPU} device
-kernels. These routines shall not be called from the host.
+kernels. Calling these routines from the host results in \textbf{undefined
+behavior}.
 
 The \openshmem library shall have been initialized with
 \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} and the corresponding capability shall have
@@ -1488,26 +1496,27 @@ return value.
 
 \subsection{Context Management}\label{subsec:gc_context}
 
-Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
-or teams created from \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} through
-\FUNC{shmem\_team\_split\_strided} and \FUNC{shmem\_team\_split\_2d} routines
-are capable of performing GPU-centric communication operations from within
-\ac{GPU} kernels. Using a context associated with any other team for GPU-centric
+Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or teams created from either of them through
+\FUNC{shmem\_team\_split\_strided} and \FUNC{shmem\_team\_split\_2d} routines are
+capable of performing GPU-centric communication operations from within \ac{GPU}
+kernels. Using a context associated with any other team for GPU-centric
 operations results in \textbf{undefined behavior}.
 
 \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
 type \CTYPE{shmem\_ctx\_t} associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
-All GPU-centric \ac{RMA} and \ac{AMO} operations that do not specify a context
-shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU} threads may
-pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable routine that
-accepts a context argument.
+All GPU-centric communication operations and synchronizations that do not specify
+a context shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU}
+threads may pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable
+routine that accepts a context argument.
 
-Explicit device contexts are created on the host using
-\FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. The
-team argument shall be \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} or a team derived from
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. Once created, these contexts may be passed
-to device-callable routines from within \ac{GPU} kernels. Device contexts shall
-not be created or destroyed from within \ac{GPU} kernels.
+Explicit device contexts are created on the host using \FUNC{shmem\_ctx\_create}
+or \FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. A
+context created with \FUNC{shmem\_ctx\_create} is associated with
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. For \FUNC{shmem\_team\_create\_ctx}, the team
+argument shall be an existing device team. Once created, these contexts may be
+passed to device-callable routines from within \ac{GPU} kernels. Device contexts
+shall not be created or destroyed from within \ac{GPU} kernels.
 
 Using a device context for GPU-aware (host-initiated) operations, or using a
 non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for GPU-centric
@@ -1520,6 +1529,11 @@ symmetric data objects for all synchronization operations in this section shall
 reside in the \ac{GPU} symmetric heap. Using local \ac{GPU} memory, local CPU
 memory, or memory from the default symmetric heap as source, destination, or
 synchronization operands for GPU-centric communication operations results in
+\textbf{undefined behavior}.
+
+For routines with a \VAR{pe} argument, the \VAR{pe} argument shall identify a
+\ac{PE} in the team associated with the given \VAR{ctx} when provided, or the
+default context otherwise. Passing an invalid \ac{PE} number results in
 \textbf{undefined behavior}.
 
 Each communication routine is provided at three thread granularities:
@@ -1596,7 +1610,7 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 be copied. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
 \apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
-with \VAR{ctx}, or \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} otherwise.}
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1649,7 +1663,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \apiargument{IN}{source}{Local address of the object containing the data to be
 copied. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1700,7 +1715,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{source}{Symmetric address of the source data object.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1751,7 +1767,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{source}{Symmetric address of the source data object.}
 \apiargument{IN}{nelems}{Number of bytes to be copied.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1827,7 +1844,8 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{value}{The operand to the atomic operation. Not used by
 \FUNC{shmemg\_atomic\_inc}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1919,7 +1937,8 @@ remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \FUNC{shmemg\_atomic\_fetch} and \FUNC{shmemg\_atomic\_fetch\_inc}.}
 \apiargument{IN}{cond}{The operand to be compared with the remote value. Used
 only by \FUNC{shmemg\_atomic\_compare\_swap}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -1936,7 +1955,7 @@ operations are:
 \hline
 \FUNC{shmemg\_atomic\_swap} & Atomically swaps the value at \VAR{dest} with \VAR{value} and returns the prior value. \\
 \hline
-\FUNC{shmemg\_atomic\_compare\_swap} & Compares value at \VAR{dest} with \VAR{cond}; if equal, replaces with \VAR{value}. Returns the prior value. \\
+\FUNC{shmemg\_atomic\_compare\_swap} & Compares the value at \VAR{dest} with \VAR{cond}; if equal, replaces it with \VAR{value}. Returns the prior value. \\
 \hline
 \FUNC{shmemg\_atomic\_fetch\_add} & Atomically adds \VAR{value} to \VAR{dest} and returns the prior value. \\
 \hline
@@ -2021,7 +2040,8 @@ remote PE. Shall reside in the \ac{GPU} symmetric heap.}
 \apiargument{IN}{value}{The operand to the atomic operation.}
 \apiargument{IN}{cond}{The operand to be compared with the remote value. Used
 only by \FUNC{shmemg\_atomic\_compare\_swap\_nbi}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -2102,7 +2122,8 @@ be copied. Shall reside in the \ac{GPU} symmetric heap.}
 remote PE.}
 \apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
 \apiargument{IN}{sig\_op}{Signal operator for the update on \VAR{sig\_addr}.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
@@ -2175,12 +2196,13 @@ performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
 \apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object.}
 \apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
 \apiargument{IN}{sig\_op}{Signal operator for the update.}
-\apiargument{IN}{pe}{PE number of the remote PE.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
 \end{apiarguments}
 
 \apidescription{
 Callable from within a \ac{GPU} kernel.
-The routines initiate a copy and signal update. The routines return after
+The routines initiate a copy and a signal update. The routines return after
 initiating the operation. The operation is considered complete after a subsequent
 call to \FUNC{shmemg\_quiet}. The \VAR{dest}, \VAR{source}, and \VAR{sig\_addr}
 data objects shall reside in the \ac{GPU} symmetric heap. \VAR{sig\_addr} and
@@ -2335,8 +2357,9 @@ condition.
 \subsubsection{Memory Ordering}\label{subsec:gc_ordering}
 
 The memory ordering routines order or complete outstanding put, \ac{AMO}, and
-put-with-signal operations issued from within a \ac{GPU} device kernel. All
-memory ordering routines operate at single-thread granularity.
+put-with-signal operations issued from within a \ac{GPU} device kernel.
+Device-initiated memory ordering routines are provided at thread, thread group,
+and hardware thread group granularities.
 
 \subsubsubsection{\textbf{SHMEMG\_FENCE}}\label{subsec:gc_fence}
 
@@ -2523,15 +2546,17 @@ __device__ int shmemg_team_sync_htg(shmem_team_t team);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
-\apiargument{IN}{team}{The team over which to perform the synchronization.}
+\apiargument{IN}{team}{The device team over which to perform the synchronization.}
 \end{apiarguments}
 
 \apidescription{
 Callable from within a \ac{GPU} kernel.
 \FUNC{shmemg\_team\_sync} is a collective synchronization routine over an
-existing \openshmem team. The routine blocks until all \acp{PE} in the specified
-team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team shall
-participate.
+existing device team. The \VAR{team} argument shall be
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+team created from either of them. The routine blocks until all \acp{PE} in the
+specified team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team
+shall participate.
 
 \FUNC{shmemg\_team\_sync} ensures completion and visibility of previously issued
 memory store operations but does not ensure completion of remote memory updates
@@ -2678,7 +2703,7 @@ commands depend on the implementation and GPU vendor.
 
 \subsection*{Compilation}
 
-A typical compilation workflow:
+A typical compilation workflow is:
 
 \begin{enumerate}
 \item Compile GPU device code using the vendor compiler (e.g., \texttt{nvcc},
@@ -2720,15 +2745,18 @@ their respective sections throughout this specification.
 \item Calling any GPU-centric routine without the
   \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} capability having been requested and
   returned.
+\item Calling any GPU-centric routine from the host.
 \item Providing different values for the \VAR{requested} GPU support constants
   across \acp{PE} in \FUNC{shmem\_init\_thread}.
 \item Using a device context for GPU-aware (host-initiated) operations.
 \item Using a non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for
   GPU-centric (device kernel) operations.
 \item Using a context associated with a team other than
-  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} or a team derived from it for GPU-centric
-  operations.
-\item Passing an invalid device context handle to a GPU-centric routine.
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+  team derived from either of them for GPU-centric operations.
+\item Passing an invalid device context handle to a GPU-centric routine, except
+  where the routine explicitly defines behavior for
+  \CONST{SHMEM\_CTX\_INVALID}.
 \item Concurrent atomic operations on the same memory location using contexts
   from different atomicity domains.
 \item Calling \FUNC{shmemg\_malloc} with a \VAR{size} value that differs across
@@ -2757,6 +2785,9 @@ their respective sections throughout this specification.
 \item Calling \FUNC{shmemg\_sync\_all}, \FUNC{shmemg\_team\_sync}, or their
   \texttt{\_tg}/\texttt{\_htg} variants without all \acp{PE} in the specified
   team participating.
+\item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that is not
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+  team derived from either of them.
 \item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that compares
   equal to \CONST{SHMEM\_TEAM\_INVALID} or is otherwise invalid.
 \end{enumerate}
@@ -2806,9 +2837,11 @@ by these implementations.
 \item Defined predefined device teams (\CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
   \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}) and default device context
   (\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}).
-\item Defined GPU-centric \ac{RMA}, \ac{AMO}, signaling, point-to-point
-  synchronization, memory ordering, and collective operations with thread, thread
-  group, and hardware thread group granularity.
+\item Defined GPU-centric \ac{RMA}, put-with-signal, memory ordering, and
+  collective operations with thread, thread group, and hardware thread group
+  granularity.
+\item Defined GPU-centric \ac{AMO}, signal-fetch, and point-to-point
+  synchronization operations at single-thread granularity.
 \item Specified cross-domain ordering semantics for \FUNC{shmem\_fence},
   \FUNC{shmem\_quiet}, and \FUNC{shmem\_put\_signal} when GPU-aware communication
   is enabled.
