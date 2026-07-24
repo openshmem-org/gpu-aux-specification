@@ -2349,6 +2349,18 @@ __device__ void shmemg_fence(void);
 __device__ void shmemg_ctx_fence(shmem_ctx_t ctx);
 \end{Csynopsis}
 
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_fence_tg(void);
+__device__ void shmemg_ctx_fence_tg(shmem_ctx_t ctx);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_fence_htg(void);
+__device__ void shmemg_ctx_fence_htg(shmem_ctx_t ctx);
+\end{CsynopsisCol}
+
 \begin{apiarguments}
 \apiargument{IN}{ctx}{A context handle. When not provided, the operation is
 performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
@@ -2391,6 +2403,18 @@ operations to symmetric data objects.
 __device__ void shmemg_quiet(void);
 __device__ void shmemg_ctx_quiet(shmem_ctx_t ctx);
 \end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_quiet_tg(void);
+__device__ void shmemg_ctx_quiet_tg(shmem_ctx_t ctx);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+__device__ void shmemg_quiet_htg(void);
+__device__ void shmemg_ctx_quiet_htg(shmem_ctx_t ctx);
+\end{CsynopsisCol}
 
 \begin{apiarguments}
 \apiargument{IN}{ctx}{A context handle. When not provided, the operation is
