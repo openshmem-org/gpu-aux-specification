@@ -372,7 +372,7 @@ predefined team and forms a distinct atomicity domain (see
 of all \acp{PE} that would mutually return a non-null address from a call to
 \FUNC{shmem\_ptr} or \FUNC{shmem\_team\_ptr} for all \ac{GPU} symmetric heap
 objects. That is, \FUNC{shmem\_ptr} and \FUNC{shmem\_team\_ptr} must return a
-non-null pointer to the local \ac{PE} for all \ac{GPU} symmetric heap objects on
+non-null pointer valid on the local \ac{PE} for all \ac{GPU} symmetric heap objects on
 all target \acp{PE} in the team. This means that \ac{GPU} symmetric heap objects
 on each \ac{PE} are directly load/store accessible by all \acp{PE} in the team.
 
@@ -405,6 +405,7 @@ atomic operations on the same location using a context derived from
 \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and a context derived from
 \CONST{SHMEM\_TEAM\_WORLD} result in undefined behavior.
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 7: Context Management
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -415,9 +416,10 @@ the caller to manage the ordering and completion of communication operations.
 The context model is extended to support GPU-centric operations. Device contexts
 are created using the existing \FUNC{shmem\_ctx\_create} and
 \FUNC{shmem\_team\_create\_ctx} routines with the \CONST{SHMEM\_DEVICE\_CTX}
-option.
+option. Contexts also allow \openshmem atomic memory operations to specify
+an atomicity domain.
 
-\subsection{Default Device Context}\label{subsec:default_device_ctx}
+\subsection{Default Device Contexts}\label{subsec:default_device_ctxs}
 
 \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
 type \CTYPE{shmem\_ctx\_t} that serves as the default context for all GPU-centric
@@ -427,6 +429,15 @@ do not specify a context shall be performed on
 with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
 
 \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be passed to
+\FUNC{shmem\_ctx\_destroy}.
+
+\CONST{SHMEM\_DEVICE\_SHARED\_CTX} is a predefined
+communication context of type \CTYPE{shmem\_ctx\_t} that serves as the
+context for GPU-centric operations to leverage the ordering,
+completion, and atomicity domains associated with
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}.
+
+\CONST{SHMEM\_DEVICE\_SHARED\_CTX} shall not be passed to
 \FUNC{shmem\_ctx\_destroy}.
 
 \subsection{Context Separation}\label{subsec:context_separation}
@@ -568,6 +579,14 @@ Handle of type \CTYPE{shmem\_ctx\_t} that corresponds to the default
 communication context for GPU-centric operations. All GPU-centric communication
 operations and synchronizations that do not specify a context shall be performed
 on this default device context. \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be
+used for GPU-aware operations. \\
+\hline
+\LibHandleRef{SHMEM\_DEVICE\_SHARED\_CTX} &
+Handle of type \CTYPE{shmem\_ctx\_t} that corresponds to the
+communication context for GPU-centric operations which wish to use the
+ordering, completion, and atomicity domains associated with
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}.
+\CONST{SHMEM\_DEVICE\_SHARED\_CTX} shall not be
 used for GPU-aware operations. \\
 \hline
 \end{longtable}
