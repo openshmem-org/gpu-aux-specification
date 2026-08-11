@@ -168,10 +168,11 @@ symmetric heap defined by the \openshmem specification.
 \subsection{Processing Elements and GPU Association}\label{subsec:pe_gpu_association}
 
 The concept of a processing element (\ac{PE}) is defined by the \openshmem
-specification. Each \ac{PE} that uses the GPU support defined by this
-specification shall be associated with exactly one \ac{GPU}. The association
-between a \ac{PE} and its \ac{GPU} shall be established during initialization of
-the \openshmem library and shall remain fixed for the duration of the program.
+specification. In this version of the specification, every \ac{PE} in an
+\openshmem program that uses the GPU support defined herein shall be associated
+with exactly one \ac{GPU}. The association between a \ac{PE} and its \ac{GPU}
+shall be established during initialization of the \openshmem library and shall
+remain fixed for the duration of the program.
 
 The mechanism by which a \ac{GPU} is selected for association with a \ac{PE} is
 outside the scope of this specification. The application or runtime environment
@@ -179,11 +180,6 @@ shall select the \ac{GPU} prior to initialization of the \openshmem library. The
 \openshmem implementation shall use the \ac{GPU} that has been made current or
 otherwise designated by the execution environment at the time of library
 initialization.
-
-\textbf{Constraint:} A \ac{PE} shall not be associated with more than one
-\ac{GPU}. A \ac{PE} that has no associated \ac{GPU} shall not invoke the
-\ac{GPU} interfaces defined herein. All \acp{PE} in the \openshmem program shall
-have a valid PE-to-GPU association before using these interfaces.
 
 \subsection{Memory Domains}
 Accessing local or remote GPU-attached memory can require different actions and
@@ -363,13 +359,10 @@ may be used with device teams as parent teams.
 \subsubsection{SHMEM\_DEVICE\_TEAM\_WORLD}\label{subsec:shmem_device_team_world}
 
 \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is a predefined team of type
-\CTYPE{shmem\_team\_t} that contains all \acp{PE} in the \openshmem program that
-have a valid PE-to-GPU association. \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is a
-separate predefined team from \CONST{SHMEM\_TEAM\_WORLD}. Because all \acp{PE}
-are required to have a valid PE-to-GPU association (see
-\cref{subsec:pe_gpu_association}), the set of member \acp{PE} in
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is the same as the set of member \acp{PE} in
-\CONST{SHMEM\_TEAM\_WORLD}.
+\CTYPE{shmem\_team\_t} that contains all \acp{PE} in the \openshmem program.
+It has the same membership as \CONST{SHMEM\_TEAM\_WORLD}, but it is a separate
+predefined team and forms a distinct atomicity domain (see
+\cref{subsec:atomicity_domains}).
 
 \subsubsection{SHMEM\_DEVICE\_TEAM\_SHARED}\label{subsec:shmem_device_team_shared}
 
@@ -560,10 +553,10 @@ specification.
 \endhead
 \LibHandleRef{SHMEM\_DEVICE\_TEAM\_WORLD} &
 Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team containing all
-\acp{PE} in the \openshmem program that have a valid PE-to-GPU association.
-\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} shall have the same set of member \acp{PE} as
-\CONST{SHMEM\_TEAM\_WORLD}. This handle may be used in collective operations and
-team-based communication routines that operate on the \ac{GPU} symmetric heap. \\
+\acp{PE} in the \openshmem program. \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} has the
+same membership as \CONST{SHMEM\_TEAM\_WORLD}, but is a separate predefined team.
+This handle may be used in collective operations and team-based communication
+routines that operate on the \ac{GPU} symmetric heap. \\
 \hline
 \LibHandleRef{SHMEM\_DEVICE\_TEAM\_SHARED} &
 Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team of \acp{PE}
