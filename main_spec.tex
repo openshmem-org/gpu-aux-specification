@@ -219,16 +219,6 @@ shall select the \ac{GPU} prior to initialization of the \openshmem library. The
 otherwise designated by the execution environment at the time of library
 initialization.
 
-\subsection{Memory Domains}
-Accessing local or remote GPU-attached memory can require different actions and
-routing paths than accessing host-attached memory, and this motivates a semantic
-distinction between the two memory spaces. Thus, OpenSHMEM separates CPU-attached
-memory and GPU-attached memory into separate "memory domains". Each PE may be
-associated with a CPU and a GPU memory domain, and each domain can extend to multiple PEs.
-This means that, depending on the system, both CPU and GPU memory domains may be
-directly accessed (i.e., return a non-null value for \FUNC{shmem\_ptr} or
-\FUNC{shmem\_team\_ptr}) by CPU or GPU threads on a local PE or a remote PE.
-
 \subsection{GPU Symmetric Heap}\label{subsec:gpu_symmetric_heap}
 
 The \ac{GPU} symmetric heap is distributed across \acp{PE}, with each \ac{PE}'s
@@ -317,8 +307,8 @@ may be used with GPU-attached memory buffers.
 
 The remote operand in a communication operation may reside in either the default
 (CPU-attached) symmetric heap defined by \openshmem 1.6 or the \ac{GPU}
-symmetric heap for the GPU-aware Communication operations. For GPU-centric
-Communication operations, the remote operand should reside in the \ac{GPU}
+symmetric heap for the GPU-aware communication operations. For GPU-centric
+communication operations, the remote operand should reside in the \ac{GPU}
 symmetric heap only. The same \openshmem routine shall be used regardless of whether
 the remote memory is CPU-attached or GPU-attached.
 
@@ -372,7 +362,7 @@ symmetric heap:
 \textbf{Operation} & \textbf{Description} \\
 \hline
 \endhead
-\ac{RMA} & Put and get operations, including bulk and scalar variants \\
+\ac{RMA} & Put and get operations, including bulk and single-element variants \\
 \hline
 \ac{AMO} & Fetch, non-fetch, and compare-and-swap variants \\
 \hline
@@ -1001,7 +991,7 @@ GPU symmetric heap, static/global data \\
 \hline
 \end{longtable}
 
-\subsubsection{Scalar Put}\label{subsec:ga_scalar_put}
+\subsubsection{Single-Element Put}\label{subsec:ga_scalar_put}
 
 Copies one data item to a remote \ac{PE}. The \VAR{value} argument is passed by
 value; no memory location restriction applies.
@@ -1064,7 +1054,7 @@ GPU symmetric heap, static/global data \\
 \hline
 \end{longtable}
 
-\subsubsection{Scalar Get}\label{subsec:ga_scalar_get}
+\subsubsection{Single-Element Get}\label{subsec:ga_scalar_get}
 
 Copies one data item from a remote \ac{PE}. The return value is passed by value;
 no memory location restriction applies.
@@ -1346,7 +1336,7 @@ and makes them visible across both domains at all PEs.}
 
 \subsubsection{SHMEM\_FENCE}\label{subsec:ga_shmem_fence}
 
-Ensures ordering of delivery of put, non-blocking get, \ac{AMO}, memory store, and put-with-signal
+Ensures ordering of delivery of put, nonblocking get, \ac{AMO}, memory store, and put-with-signal
 operations on symmetric data objects in the same memory domain when GPU-aware communication is enabled.
 
 \begin{apidefinition}
