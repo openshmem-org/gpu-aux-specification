@@ -1,0 +1,26 @@
+
+Several vendor-specific implementations extended the \openshmem \ac{API} to
+\ac{GPU} architectures and informed the design of this specification.
+
+\begin{description}
+\item[NVSHMEM.] NVIDIA's \openshmem implementation for CUDA. NVSHMEM provides
+  GPU-initiated communication from CUDA kernels and introduced the thread group
+  and warp-level collective variants that influenced the \texttt{\_tg} and
+  \texttt{\_htg} suffixes in this specification.
+
+\item[rocSHMEM.] AMD's \openshmem implementation for HIP (formerly ROC\_SHMEM).
+  rocSHMEM provides GPU-initiated communication from HIP kernels with wavefront
+  and workgroup granularity.
+
+\item[Intel SHMEM (ISHMEM).] Intel's \openshmem implementation for SYCL. ISHMEM
+  provides GPU-initiated communication from SYCL kernels with sub-group and
+  work-group granularity.
+\end{description}
+
+The GPU-centric routines in this specification adopt a vendor-neutral naming
+convention (\texttt{shmemg\_}) and a generalized thread granularity model
+(thread, thread group, hardware thread group) derived from patterns established
+by these implementations.
+
+\clearpage
+

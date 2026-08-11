@@ -1,0 +1,60 @@
+
+This annex consolidates the conditions that result in undefined behavior when
+using the \openshmem GPU support extensions. These conditions are also stated in
+their respective sections throughout this specification.
+
+\begin{enumerate}
+\item Calling any \texttt{shmemg\_} routine without first initializing the
+  \openshmem library with the required GPU support constant.
+\item Calling any GPU-centric routine without the
+  \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} capability having been requested and
+  returned.
+\item Calling any GPU-centric routine from the host.
+\item Providing different values for the \VAR{requested} GPU support constants
+  across \acp{PE} in \FUNC{shmem\_init\_thread}.
+\item Using a device context for GPU-aware (host-initiated) operations.
+\item Using a non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for
+  GPU-centric (device kernel) operations.
+\item Using a context associated with a team other than
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+  team derived from either of them for GPU-centric operations.
+\item Passing an invalid device context handle to a GPU-centric routine, except
+  where the routine explicitly defines behavior for
+  \CONST{SHMEM\_CTX\_INVALID}.
+\item Concurrent atomic operations on the same memory location using contexts
+  from different atomicity domains.
+\item Calling \FUNC{shmemg\_malloc} with a \VAR{size} value that differs across
+  \acp{PE}.
+\item Calling \FUNC{shmemg\_calloc} with \VAR{count} or \VAR{size} values that
+  differ across \acp{PE}.
+\item Calling \FUNC{shmemg\_align} with an \VAR{alignment} value that is not a
+  multiple of \texttt{sizeof(void *)} or is not a power of two.
+\item Calling \FUNC{shmemg\_align} with \VAR{alignment} or \VAR{size} values that
+  differ across \acp{PE}.
+\item Calling \FUNC{shmemg\_free} with a \VAR{ptr} value that differs across
+  \acp{PE}.
+\item Using GPU-attached memory for the \VAR{status} or \VAR{indices} arguments
+  of the array variants of wait-until and test.
+\item Using local \ac{GPU} memory, local CPU memory, or memory from the default
+  symmetric heap as operands for any GPU-centric \ac{RMA}, \ac{AMO}, signaling,
+  or synchronization operation.
+\item Calling a thread group (\texttt{\_tg}) or hardware thread group
+  (\texttt{\_htg}) variant without all threads in the group participating.
+\item Calling a \texttt{\_tg} or \texttt{\_htg} variant with arguments that
+  differ across threads in the group.
+\item Passing an invalid \ac{PE} number to a GPU-centric communication routine.
+\item Accessing data from a prior operation to the \ac{GPU} symmetric heap before
+  that operation is visible, when the sender used \FUNC{shmem\_fence} between two
+  operations targeting different memory domains on the same \ac{PE}.
+\item Calling \FUNC{shmemg\_sync\_all}, \FUNC{shmemg\_team\_sync}, or their
+  \texttt{\_tg}/\texttt{\_htg} variants without all \acp{PE} in the specified
+  team participating.
+\item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that is not
+  \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+  team derived from either of them.
+\item Calling \FUNC{shmemg\_team\_sync} with a \VAR{team} argument that compares
+  equal to \CONST{SHMEM\_TEAM\_INVALID} or is otherwise invalid.
+\end{enumerate}
+
+\clearpage
+

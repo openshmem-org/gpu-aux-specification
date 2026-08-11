@@ -1,0 +1,44 @@
+
+The \openshmem specification defines communication contexts as objects that allow
+the caller to manage the ordering and completion of communication operations.
+The context model is extended to support GPU-centric operations. Device contexts
+are created using the existing \FUNC{shmem\_ctx\_create} and
+\FUNC{shmem\_team\_create\_ctx} routines with the \CONST{SHMEM\_DEVICE\_CTX}
+option.
+
+\subsection{Default Device Context}\label{subsec:default_device_ctx}
+
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
+type \CTYPE{shmem\_ctx\_t} that serves as the default context for all GPU-centric
+operations. All GPU-centric communication operations and synchronizations that
+do not specify a context shall be performed on
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. The default device context is associated
+with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
+
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be passed to
+\FUNC{shmem\_ctx\_destroy}.
+
+\subsection{Context Separation}\label{subsec:context_separation}
+
+Communication contexts are not shared between GPU-aware and GPU-centric
+operations.
+
+\begin{longtable}{|p{3cm}|p{5cm}|p{6cm}|}
+\hline
+\textbf{Context Type} & \textbf{Created With} & \textbf{Use For} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Context Type} & \textbf{Created With} & \textbf{Use For} \\
+\hline
+\endhead
+Device context & \CONST{SHMEM\_DEVICE\_CTX} option & GPU-centric operations (from GPU kernels) \\
+\hline
+Host context & No \CONST{SHMEM\_DEVICE\_CTX} option; includes \CONST{SHMEM\_CTX\_DEFAULT} & GPU-aware or host-side operations \\
+\hline
+\end{longtable}
+
+\textbf{Warning:} Using a device context for GPU-aware operations or a
+non-device context for GPU-centric operations results in \textbf{undefined
+behavior}.
+

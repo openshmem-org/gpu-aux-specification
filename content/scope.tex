@@ -1,0 +1,28 @@
+
+The following are defined:
+\begin{itemize}
+\item Extensions to the \openshmem memory model to support a \ac{GPU} symmetric
+  heap allocated from GPU-attached memory
+\item Host-side interfaces for allocating and managing symmetric data objects
+  within the \ac{GPU} symmetric heap
+\item Device-side interfaces for initiating communication operations from
+  \ac{GPU} execution contexts (\ac{GPU} kernels)
+\item Semantics for data movement, atomic memory operations, and synchronization
+  involving GPU-attached symmetric memory
+\item Runtime capability reporting via \FUNC{shmem\_init\_thread}
+\item Requirements for memory ordering and coherence when both the default and
+  \ac{GPU} symmetric heaps are in use
+\end{itemize}
+
+The following are \textbf{not} defined:
+\begin{itemize}
+\item GPU programming models, device kernel languages, or GPU runtime APIs
+\item Mechanisms for selecting or assigning GPUs to processing elements
+\item Specific GPU architectures, vendor-specific features, or device driver
+  interfaces
+\item Performance characteristics, optimization requirements, or benchmarking
+  methodologies
+\item Network hardware capabilities, protocols, or transport-layer mechanisms
+\item Extensions for non-GPU accelerators (FPGAs, DSPs, TPUs, DPUs, etc.)
+\end{itemize}
+

@@ -1,0 +1,120 @@
+
+The collective routines synchronize across all \acp{PE} in a team. These routines
+are provided at the same three thread granularities as the communication
+operations: thread, thread group (\texttt{\_tg}), and hardware thread group
+(\texttt{\_htg}).
+
+All \acp{PE} in the specified team shall participate in the collective operation.
+If any \ac{PE} in the team does not call the routine, the behavior is undefined.
+
+\subsubsubsection{\textbf{SHMEMG\_SYNC\_ALL}}\label{subsec:gc_sync_all}
+
+Registers the arrival of a \ac{PE} at a synchronization point and blocks until
+all \acp{PE} in \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have arrived.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE int shmemg_sync_all(void);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE int shmemg_sync_all_tg(void);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE int shmemg_sync_all_htg(void);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+None.
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_sync\_all} is a collective synchronization routine over
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. The routine blocks until all \acp{PE} in
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have called \FUNC{shmemg\_sync\_all}.
+
+\FUNC{shmemg\_sync\_all} ensures completion and visibility of previously issued
+memory store operations but does not ensure completion of remote memory updates
+issued via \openshmem routines. To ensure completion of remote operations before
+synchronizing, \FUNC{shmemg\_quiet} shall be called prior to
+\FUNC{shmemg\_sync\_all}.
+
+\FUNC{shmemg\_sync\_all} is equivalent to calling \FUNC{shmemg\_team\_sync} on
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and returns the same value.
+}
+
+\apireturnvalues{
+Zero on successful synchronization; otherwise, a nonzero value.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{SHMEMG\_TEAM\_SYNC}}\label{subsec:gc_team_sync}
+
+Registers the arrival of a \ac{PE} at a synchronization point and blocks until
+all \acp{PE} in the specified team have arrived.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE int shmemg_team_sync(shmem_team_t team);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE int shmemg_team_sync_tg(shmem_team_t team);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE int shmemg_team_sync_htg(shmem_team_t team);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{team}{The device team over which to perform the synchronization.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_team\_sync} is a collective synchronization routine over an
+existing device team. The \VAR{team} argument shall be
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}, \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or a
+team created from either of them. The routine blocks until all \acp{PE} in the
+specified team have called \FUNC{shmemg\_team\_sync}. All \acp{PE} in the team
+shall participate.
+
+\FUNC{shmemg\_team\_sync} ensures completion and visibility of previously issued
+memory store operations but does not ensure completion of remote memory updates
+issued via \openshmem routines. To ensure completion of remote operations before
+synchronizing, \FUNC{shmemg\_quiet} shall be called prior to
+\FUNC{shmemg\_team\_sync}.
+
+If \VAR{team} compares equal to \CONST{SHMEM\_TEAM\_INVALID} or is otherwise
+invalid, the behavior is undefined.
+}
+
+\apireturnvalues{
+Zero on successful synchronization; otherwise, a nonzero value.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program launches a device kernel in which every \ac{PE} puts a
+value to its right neighbor, completes the transfer with \FUNC{shmemg\_quiet},
+and then joins a device-wide barrier over \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}
+with \FUNC{shmemg\_sync\_all}. \FUNC{shmemg\_team\_sync} may be used to
+synchronize a subset team instead.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_collectives_example.c}
+
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Annexes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+

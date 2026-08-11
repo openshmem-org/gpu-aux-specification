@@ -1,0 +1,86 @@
+
+The point-to-point synchronization routines provide a mechanism for
+synchronization between two \acp{PE} based on the value of a symmetric data
+object.
+
+\subsubsection{Wait-Until}\label{subsec:ga_wait_until}
+
+Wait for a variable on the local \ac{PE} to change.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivar} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
+
+\subsubsection{Wait-Until (Array Variants)}\label{subsec:ga_wait_until_array}
+
+Wait on an array of variables on the local \ac{PE} until the specified wait
+condition is met.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivars} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{status} & IN & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\VAR{indices} & OUT & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{status} and \VAR{indices} arguments shall reside in CPU-attached memory;
+using GPU-attached memory for these arguments results in undefined behavior.
+
+\subsubsection{Test}\label{subsec:ga_test}
+
+Indicate whether a variable on the local \ac{PE} meets a specified test
+condition.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivar} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Test (Array Variants)}\label{subsec:ga_test_array}
+
+Indicate whether variables within an array on the local \ac{PE} meet a specified
+test condition.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{ivars} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{status} & IN & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\VAR{indices} & OUT & Local CPU memory, default symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{status} and \VAR{indices} arguments shall reside in CPU-attached memory;
+using GPU-attached memory for these arguments results in undefined behavior.
+
+\subsubsection{Signal-Wait-Until}\label{subsec:ga_signal_wait_until}
+
+Wait for a variable on the local \ac{PE} to change from a signaling operation.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{sig\_addr} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{cmp} and \VAR{cmp\_value} arguments are passed by value.
+

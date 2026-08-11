@@ -1,0 +1,186 @@
+
+The signaling routines in this section copy data from a contiguous local data
+object to a data object on a specified \ac{PE} and subsequently update a remote
+signal data object to indicate delivery. The signal-fetch routine reads a local
+signal value.
+
+The \VAR{dest}, \VAR{sig\_addr}, and \VAR{source} data objects for all signaling
+routines in this section shall reside in the \ac{GPU} symmetric heap. Using local
+\ac{GPU} memory, local CPU memory, or memory from the default symmetric heap as
+operands results in \textbf{undefined behavior}.
+
+\subsubsubsection{\textbf{Put-with-Signal}}\label{subsec:gc_put_signal}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently updates a remote signal data object.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_putmem_signal(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_signal_tg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_signal_htg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object on the
+remote PE.}
+\apiargument{IN}{source}{Local address of the data object containing the data to
+be copied. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object on the
+remote PE.}
+\apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
+\apiargument{IN}{sig\_op}{Signal operator for the update on \VAR{sig\_addr}.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines copy data from \VAR{source} to \VAR{dest} on \ac{PE} \VAR{pe} and
+subsequently update the signal data object at \VAR{sig\_addr}. The routines
+return after the data has been copied out of \VAR{source}. Completion of the
+signal update on the remote \ac{PE} indicates delivery of the corresponding
+\VAR{dest} data.
+
+An update to the \VAR{sig\_addr} signal data object completes as if performed
+atomically. The \VAR{dest}, \VAR{source}, and \VAR{sig\_addr} data objects shall
+reside in the \ac{GPU} symmetric heap. \VAR{sig\_addr} and \VAR{dest} shall not
+overlap in memory.
+}
+
+\apireturnvalues{
+None.
+}
+
+\apinotes{
+Completion of the signal update indicates only the delivery of the corresponding
+\VAR{dest} data. Without a memory-ordering operation, there is no implied
+ordering between the signal update and another data transfer.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Put-with-Signal}}\label{subsec:gc_put_signal_nbi}
+
+Initiates a nonblocking copy of data to a specified \ac{PE} with a subsequent
+signal update.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_putmem_signal_nbi(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_nbi(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, uint64_t *sig_addr,
+    uint64_t signal, int sig_op, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_signal_nbi_tg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_nbi_tg(shmem_ctx_t ctx,
+    void *dest, const void *source, size_t nelems,
+    uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_signal_nbi_htg(void *dest, const void *source,
+    size_t nelems, uint64_t *sig_addr, uint64_t signal,
+    int sig_op, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_nbi_htg(shmem_ctx_t ctx,
+    void *dest, const void *source, size_t nelems,
+    uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object.}
+\apiargument{IN}{source}{Local address of the data object. Shall reside in the
+\ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{OUT}{sig\_addr}{Symmetric address of the signal data object.}
+\apiargument{IN}{signal}{Unsigned 64-bit value for updating \VAR{sig\_addr}.}
+\apiargument{IN}{sig\_op}{Signal operator for the update.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines initiate a copy and a signal update. The routines return after
+initiating the operation. The operation is considered complete after a subsequent
+call to \FUNC{shmemg\_quiet}. The \VAR{dest}, \VAR{source}, and \VAR{sig\_addr}
+data objects shall reside in the \ac{GPU} symmetric heap. \VAR{sig\_addr} and
+\VAR{dest} shall not overlap in memory.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Signal-Fetch}}\label{subsec:gc_signal_fetch}
+
+Fetches the value of a local signal data object.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE uint64_t shmemg_signal_fetch(const uint64_t *sig_addr);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{sig\_addr}{Local address of the remotely accessible signal
+variable. Shall reside in the \ac{GPU} symmetric heap.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_signal\_fetch} returns the value of the signal data object at
+address \VAR{sig\_addr} on the calling \ac{PE}. Access to \VAR{sig\_addr}
+satisfies the atomicity guarantees described in the signaling operations
+introduction.
+}
+
+\apireturnvalues{
+The value of the signal data object at \VAR{sig\_addr} on the calling \ac{PE}.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program delivers a message from \ac{PE}~0 to \ac{PE}~1 with
+\FUNC{shmemg\_putmem\_signal}, which writes the payload and then atomically
+updates a remote signal object. \ac{PE}~1 polls its local signal with
+\FUNC{shmemg\_signal\_fetch} until the arrival is observed. All operands reside
+in the \ac{GPU} symmetric heap.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_signaling_example.c}
+

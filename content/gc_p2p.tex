@@ -1,0 +1,161 @@
+
+The point-to-point synchronization routines block or test until a symmetric data
+object on the local \ac{PE} satisfies a specified condition.
+
+Each of these routines is also provided in thread group (\texttt{\_tg}) and
+hardware thread group (\texttt{\_htg}) variants, as defined in
+\cref{subsec:gc_comm_ops}. In these collective variants, all participating
+threads return together once the condition is satisfied, and any return value is
+the same across the group.
+
+The \VAR{ivar} or \VAR{sig\_addr} data object shall reside in the \ac{GPU}
+symmetric heap. Using local \ac{GPU} memory, local CPU memory, or memory from the
+default symmetric heap results in \textbf{undefined behavior}.
+
+\subsubsubsection{\textbf{Wait-Until}}\label{subsec:gc_wait_until}
+
+Blocks until a symmetric data object on the local \ac{PE} satisfies a condition.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
+    TYPE cmp_value);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_TYPENAME_wait_until_tg(TYPE *ivar, int cmp,
+    TYPE cmp_value);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_TYPENAME_wait_until_htg(TYPE *ivar, int cmp,
+    TYPE cmp_value);
+\end{CsynopsisCol}
+
+where \TYPE{} is one of the point-to-point synchronization types defined in
+\openshmem 1.6, and \TYPENAME{} is the corresponding type-name component of the
+routine name.
+
+\begin{apiarguments}
+\apiargument{IN}{ivar}{Symmetric address of the source data object. Shall reside
+in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{cmp}{The comparison operator.}
+\apiargument{IN}{cmp\_value}{The value against which \VAR{ivar} will be compared.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_wait\_until} blocks until the value of \VAR{ivar} at the calling
+\ac{PE} satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The
+supported values of \VAR{cmp} are: \CONST{SHMEM\_CMP\_EQ},
+\CONST{SHMEM\_CMP\_NE}, \CONST{SHMEM\_CMP\_GT}, \CONST{SHMEM\_CMP\_GE},
+\CONST{SHMEM\_CMP\_LT}, and \CONST{SHMEM\_CMP\_LE}.
+
+The routine shall not return until the condition is satisfied. If no \ac{PE} ever
+updates \VAR{ivar} to satisfy the condition, the routine shall not return.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Test}}\label{subsec:gc_test}
+
+Tests whether a symmetric data object on the local \ac{PE} satisfies a
+condition.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE int shmemg_TYPENAME_test_tg(TYPE *ivar, int cmp, TYPE cmp_value);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE int shmemg_TYPENAME_test_htg(TYPE *ivar, int cmp, TYPE cmp_value);
+\end{CsynopsisCol}
+
+where \TYPE{} is one of the point-to-point synchronization types defined in
+\openshmem 1.6, and \TYPENAME{} is the corresponding type-name component of the
+routine name.
+
+\begin{apiarguments}
+\apiargument{IN}{ivar}{Symmetric address of the source data object. Shall reside
+in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{cmp}{The comparison operator.}
+\apiargument{IN}{cmp\_value}{The value against which \VAR{ivar} will be compared.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_test} tests whether the value of \VAR{ivar} at the calling \ac{PE}
+satisfies the condition implied by \VAR{cmp} and \VAR{cmp\_value}. The test is
+performed once and returns without blocking.
+}
+
+\apireturnvalues{
+1 if the condition is satisfied; 0 otherwise.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Signal-Wait-Until}}\label{subsec:gc_signal_wait_until}
+
+Blocks until a local signal data object satisfies a condition.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE uint64_t shmemg_signal_wait_until(uint64_t *sig_addr,
+    int cmp, uint64_t cmp_value);
+\end{Csynopsis}
+
+Thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE uint64_t shmemg_signal_wait_until_tg(uint64_t *sig_addr,
+    int cmp, uint64_t cmp_value);
+\end{CsynopsisCol}
+
+Hardware thread group variant:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE uint64_t shmemg_signal_wait_until_htg(uint64_t *sig_addr,
+    int cmp, uint64_t cmp_value);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{sig\_addr}{Local address of the remotely accessible signal
+variable. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{cmp}{The comparison operator.}
+\apiargument{IN}{cmp\_value}{The value against which \VAR{sig\_addr} will be
+compared.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+\FUNC{shmemg\_signal\_wait\_until} blocks until the value of the signal data
+object at \VAR{sig\_addr} satisfies the condition implied by \VAR{cmp} and
+\VAR{cmp\_value}. The routine shall not return until the condition is satisfied.
+
+Access to \VAR{sig\_addr} satisfies the atomicity guarantees described in the
+signaling operations introduction.
+}
+
+\apireturnvalues{
+The value of the signal data object at \VAR{sig\_addr} that satisfies the wait
+condition.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program performs a point-to-point handshake. \ac{PE}~0 sets a flag
+on \ac{PE}~1 with a put, and \ac{PE}~1 blocks inside its kernel with
+\FUNC{shmemg\_long\_wait\_until} until the flag is observed. A nonblocking
+\FUNC{shmemg\_long\_test} could be used instead to poll without blocking.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_p2p_example.c}
+

@@ -1,0 +1,266 @@
+
+The routines in this section provide initialization and memory management for the
+\ac{GPU} symmetric heap. Runtime capability reporting is handled by
+\FUNC{shmem\_init\_thread}.
+
+\textbf{Prerequisite:} Except for \FUNC{shmem\_init\_thread}, all routines in
+this and subsequent sections require that the \openshmem library has been
+initialized with GPU support by passing \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, or both to \FUNC{shmem\_init\_thread}, and
+that the corresponding capability was returned in \VAR{provided}. Calling any
+\texttt{shmemg\_} routine, or using a routine defined in \openshmem 1.6 with
+GPU-attached memory operands, without the required capability having been
+returned in \VAR{provided} results in \textbf{undefined behavior}.
+
+The capability required by each group of routines is summarized below.
+
+\begin{longtable}{|p{7.5cm}|p{7cm}|}
+\hline
+\textbf{Routine group} & \textbf{Required capability in \VAR{provided}} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Routine group} & \textbf{Required capability in \VAR{provided}} \\
+\hline
+\endhead
+\ac{GPU} symmetric heap management (\cref{sec:init_memmgmt}) &
+\CONST{SHMEM\_DEVICE\_HOST\_INIT} or \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} \\
+\hline
+GPU-aware communication (\cref{sec:gpu_aware}) &
+\CONST{SHMEM\_DEVICE\_HOST\_INIT} \\
+\hline
+GPU-centric communication (\cref{sec:gpu_centric}) &
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} \\
+\hline
+\end{longtable}
+
+\subsection{SHMEM\_INIT\_THREAD}\label{subsec:shmem_init_thread}
+
+Initializes the \openshmem library with support for the requested thread level
+and \ac{GPU} communication capabilities.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+int shmem_init_thread(int requested, int *provided);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{requested}{The thread level and GPU support requested by the
+application. The value is a bitwise OR of a thread level constant and zero or
+more GPU support constants.}
+\apiargument{OUT}{provided}{The thread level and GPU support provided by the
+implementation.}
+\end{apiarguments}
+
+\apidescription{
+The thread level portion of \VAR{requested} and \VAR{provided} shall be one of
+\CONST{SHMEM\_THREAD\_SINGLE}, \CONST{SHMEM\_THREAD\_FUNNELED},
+\CONST{SHMEM\_THREAD\_SERIALIZED}, or \CONST{SHMEM\_THREAD\_MULTIPLE}, as
+defined in \openshmem 1.6.
+
+The GPU support portion of \VAR{requested} and \VAR{provided} may include one or
+both of the following constants, combined with the thread level using bitwise OR:
+\begin{itemize}
+\item \CONST{SHMEM\_DEVICE\_HOST\_INIT} --- requests GPU-aware communication support
+\item \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} --- requests GPU-centric communication support
+\end{itemize}
+
+\FUNC{shmem\_init\_thread} is extended to accept GPU support options in the
+\VAR{requested} argument. When any GPU support option is included in
+\VAR{requested}, the implementation shall establish the PE-to-GPU association and
+initialize the \ac{GPU} symmetric heap. When \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+is included in \VAR{requested}, the implementation shall prepare the runtime for
+GPU-aware communication. When \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is included in
+\VAR{requested}, the implementation shall prepare the runtime for GPU-centric
+communication operations invoked from within GPU kernels.
+
+The \VAR{provided} argument returns the thread level and GPU support actually
+provided by the implementation. The GPU support bits in \VAR{provided} shall
+reflect only the capabilities that the implementation has successfully
+initialized. An implementation may provide a subset of the requested GPU support.
+
+If no GPU support constants are included in \VAR{requested}, the behavior of
+\FUNC{shmem\_init\_thread} is unchanged from \openshmem 1.6.
+
+The application shall select the \ac{GPU} for association with the \ac{PE} prior
+to calling \FUNC{shmem\_init\_thread}. The implementation shall use the \ac{GPU}
+that has been made current by the execution environment at the time of the call.
+
+All \acp{PE} shall provide the same GPU support constants in \VAR{requested}. If
+differing values are used, the behavior is undefined.
+}
+
+\apireturnvalues{
+\FUNC{shmem\_init\_thread} returns 0 upon success; otherwise, it returns a
+nonzero value.
+}
+
+\apinotes{
+The application should compare the GPU support bits in \VAR{provided} against the
+requested bits to determine whether the desired GPU capabilities are available:
+\begin{itemize}
+\item If \CONST{SHMEM\_DEVICE\_HOST\_INIT} is \textbf{not} set in
+  \VAR{provided} --- do not use GPU-attached memory buffers in \openshmem
+  operations
+\item If \CONST{SHMEM\_DEVICE\_KERNEL\_INIT} is \textbf{not} set in
+  \VAR{provided} --- do not invoke \openshmem routines from GPU kernels
+\end{itemize}
+}
+\end{apidefinition}
+
+\subsection{Memory Management}\label{subsec:gpu_memmgmt}
+
+\subsubsection{SHMEMG\_MALLOC}\label{subsec:shmemg_malloc}
+
+Collectively allocate a block of memory from the \ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void *shmemg_malloc(size_t size);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{size}{The size, in bytes, of a block to be allocated from the
+\ac{GPU} symmetric heap.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_malloc} routine is a collective operation on the world team
+that returns the symmetric address of a block of at least \VAR{size} bytes from
+the \ac{GPU} symmetric heap. The returned address shall be suitably aligned so
+that it may be assigned to a pointer to any type of object. The allocated memory
+resides in GPU-attached memory on the \ac{GPU} associated with the calling
+\ac{PE}.
+
+When \VAR{size} is zero, the routine performs no action and returns a null
+pointer. Otherwise, \FUNC{shmemg\_malloc} calls a procedure that is semantically
+equivalent to \FUNC{shmem\_barrier\_all} on exit. This ensures that all \acp{PE}
+participate in the memory allocation, and that the memory on other \acp{PE} can
+be used as soon as the local \ac{PE} returns.
+
+The value of the \VAR{size} argument must be identical on all \acp{PE};
+otherwise, the behavior is undefined.
+}
+
+\apireturnvalues{
+\FUNC{shmemg\_malloc} returns the symmetric address of the allocated space;
+otherwise, it returns a null pointer.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_CALLOC}\label{subsec:shmemg_calloc}
+
+Collectively allocate a zeroed block of memory from the \ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void *shmemg_calloc(size_t count, size_t size);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{count}{The number of elements to allocate.}
+\apiargument{IN}{size}{The size, in bytes, of each element to allocate.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_calloc} routine is a collective operation on the world team
+that allocates a region of remotely accessible memory from the \ac{GPU} symmetric
+heap for an array of \VAR{count} objects of \VAR{size} bytes each. The returned
+pointer refers to the lowest byte address of the allocated memory. The space is
+initialized to all bits zero. The allocated memory resides in GPU-attached memory
+on the \ac{GPU} associated with the calling \ac{PE}.
+
+If the allocation succeeds, the returned pointer shall be suitably aligned so
+that it may be assigned to a pointer to any type of object. If the allocation
+does not succeed, or either \VAR{count} or \VAR{size} is 0, the return value is
+a null pointer.
+
+The values of \VAR{count} and \VAR{size} shall each be equal across all
+\acp{PE}; otherwise, the behavior is undefined.
+
+When \VAR{count} or \VAR{size} is 0, the routine returns without performing a
+barrier. Otherwise, \FUNC{shmemg\_calloc} calls a procedure that is semantically
+equivalent to \FUNC{shmem\_barrier\_all} on exit.
+}
+
+\apireturnvalues{
+\FUNC{shmemg\_calloc} returns a pointer to the lowest byte address of the
+allocated space; otherwise, it returns a null pointer.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_ALIGN}\label{subsec:shmemg_align}
+
+Collectively allocate a block of memory with a specified alignment from the
+\ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void *shmemg_align(size_t alignment, size_t size);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{alignment}{Byte alignment of the block allocated from the
+\ac{GPU} symmetric heap.}
+\apiargument{IN}{size}{The size, in bytes, of a block to be allocated from the
+\ac{GPU} symmetric heap.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_align} routine is a collective operation on the world team that
+allocates a block from the \ac{GPU} symmetric heap with a byte alignment
+specified by the \VAR{alignment} argument. The value of \VAR{alignment} shall be
+a multiple of \texttt{sizeof(void *)} that is also a power of two; otherwise, the
+behavior is undefined. The allocated memory resides in GPU-attached memory on the
+\ac{GPU} associated with the calling \ac{PE}.
+
+When \VAR{size} is zero, the routine performs no action and returns a null
+pointer. Otherwise, \FUNC{shmemg\_align} calls a procedure that is semantically
+equivalent to \FUNC{shmem\_barrier\_all} on exit.
+
+The values of \VAR{alignment} and \VAR{size} must be identical on all \acp{PE};
+otherwise, the behavior is undefined.
+}
+
+\apireturnvalues{
+\FUNC{shmemg\_align} returns an aligned symmetric address whose value is a
+multiple of \VAR{alignment}; otherwise, it returns a null pointer.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_FREE}\label{subsec:shmemg_free}
+
+Collectively deallocate memory from the \ac{GPU} symmetric heap.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+void shmemg_free(void *ptr);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{ptr}{Symmetric address of an object in the \ac{GPU} symmetric
+heap.}
+\end{apiarguments}
+
+\apidescription{
+The \FUNC{shmemg\_free} routine is a collective operation on the world team that
+deallocates the block to which \VAR{ptr} points, making it available for further
+allocation. If \VAR{ptr} is a null pointer, no action is performed; otherwise,
+\FUNC{shmemg\_free} calls a procedure that is semantically equivalent to
+\FUNC{shmem\_barrier\_all} on entry.
+
+It is the application's responsibility to ensure that no communication operations
+involving the given memory block are pending on any communication context prior
+to calling \FUNC{shmemg\_free}.
+
+The value of \VAR{ptr} must be identical on all \acp{PE}; otherwise, the
+behavior is undefined.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\clearpage
+

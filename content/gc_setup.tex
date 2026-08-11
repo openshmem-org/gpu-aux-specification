@@ -1,0 +1,71 @@
+
+\subsubsection{SHMEMG\_MY\_PE}\label{subsec:shmemg_my_pe}
+
+Returns the \ac{PE} number of the calling \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE int shmemg_my_pe(void);
+\end{Csynopsis}
+
+\begin{apiarguments}
+None.
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_my\_pe} routine returns the \ac{PE} number of the calling
+\ac{PE}. The value is an integer between 0 and \texttt{npes - 1}, where
+\texttt{npes} is the total number of \acp{PE} in the program. The returned value
+is identical to the value returned by \FUNC{shmem\_my\_pe} on the host for the
+same \ac{PE}.
+}
+
+\apireturnvalues{
+Integer --- between 0 and \texttt{npes - 1}.
+}
+
+\apinotes{
+All threads within a kernel launched by the same \ac{PE} shall observe the same
+return value.
+}
+\end{apidefinition}
+
+\subsubsection{SHMEMG\_N\_PES}\label{subsec:shmemg_n_pes}
+
+Returns the number of \acp{PE} in the \openshmem program.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE int shmemg_n_pes(void);
+\end{Csynopsis}
+
+\begin{apiarguments}
+None.
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_n\_pes} routine returns the total number of \acp{PE} in the
+\openshmem program. The returned value is identical to the value returned by
+\FUNC{shmem\_n\_pes} on the host.
+}
+
+\apireturnvalues{
+Integer --- total number of \acp{PE} in the program.
+}
+
+\apinotes{
+All threads within a kernel launched by the same \ac{PE} shall observe the same
+return value.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program launches a device kernel that queries the calling \ac{PE}
+number and the total number of \acp{PE} from within the kernel using
+\FUNC{shmemg\_my\_pe} and \FUNC{shmemg\_n\_pes}, writing the results to a
+symmetric buffer in the \ac{GPU} symmetric heap.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_setup_example.c}
+

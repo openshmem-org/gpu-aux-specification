@@ -1,0 +1,23 @@
+
+\openshmem Auxiliary Specification for GPU Support defines extensions to the
+\openshmem library interface specification for GPU-aware and GPU-centric
+communication. These extensions allow \openshmem implementations to use
+GPU-attached memory buffers for remote memory access, atomic memory operations,
+and synchronization while maintaining compatibility with the core \openshmem
+programming model.
+
+Two communication paradigms are defined:
+
+\begin{description}
+\item[GPU-Aware Communication]
+A programming model in which GPU-attached memory buffers may be used as source
+or destination operands in \openshmem operations. The host \ac{PE} invokes
+\openshmem routines, and the implementation shall manage data transfers
+involving GPU-attached memory.
+
+\item[GPU-Centric Communication]
+A programming model in which communication operations may be initiated directly
+from \ac{GPU} execution contexts, such as device kernels. \ac{GPU} threads invoke
+\openshmem routines without host-side intervention.
+\end{description}
+

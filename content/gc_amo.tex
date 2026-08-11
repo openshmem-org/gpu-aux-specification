@@ -1,0 +1,288 @@
+
+The \ac{AMO} routines in this section perform atomic read, update, or write
+operations on symmetric data objects in the \ac{GPU} symmetric heap. Two types
+are defined: non-fetching routines update the remote data object without
+returning a value, and fetching routines return the value of the remote data
+object prior to the update.
+
+The \VAR{dest} data object for all \ac{AMO} routines in this section shall reside
+in the \ac{GPU} symmetric heap. Using local \ac{GPU} memory, local CPU memory, or
+memory from the default symmetric heap as the \VAR{dest} operand results in
+\textbf{undefined behavior}.
+
+The \VAR{value}, \VAR{cond}, and \VAR{cmp\_value} arguments are passed by value;
+no memory location restriction applies.
+
+All \ac{AMO} routines operate at single-thread granularity. No thread group or
+hardware thread group variants are defined.
+
+\subsubsubsection{\textbf{Non-fetching AMOs}}\label{subsec:gc_nonfetch_amo}
+
+Atomically updates a symmetric data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_set(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_set(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_add(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_add(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_inc(TYPE *dest, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_inc(shmem_ctx_t ctx,
+    TYPE *dest, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_and(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_and(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_or(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_or(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_xor(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_xor(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6, and
+\TYPENAME{} is the corresponding type-name component of the routine name.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the data object to be updated on the
+remote PE. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The operand to the atomic operation. Not used by
+\FUNC{shmemg\_atomic\_inc}.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The non-fetching \ac{AMO} routines perform an atomic update to the data object at
+address \VAR{dest} on \ac{PE} \VAR{pe}. The operations are:
+
+\begin{longtable}{|p{5cm}|p{9.5cm}|}
+\hline
+\textbf{Routine} & \textbf{Operation} \\
+\hline
+\FUNC{shmemg\_atomic\_set} & Atomically sets the value at \VAR{dest} to \VAR{value}. \\
+\hline
+\FUNC{shmemg\_atomic\_add} & Atomically adds \VAR{value} to the value at \VAR{dest}. \\
+\hline
+\FUNC{shmemg\_atomic\_inc} & Atomically increments the value at \VAR{dest} by one. \\
+\hline
+\FUNC{shmemg\_atomic\_and} & Atomically performs a bitwise AND of \VAR{value} with the value at \VAR{dest}. \\
+\hline
+\FUNC{shmemg\_atomic\_or} & Atomically performs a bitwise OR of \VAR{value} with the value at \VAR{dest}. \\
+\hline
+\FUNC{shmemg\_atomic\_xor} & Atomically performs a bitwise XOR of \VAR{value} with the value at \VAR{dest}. \\
+\hline
+\end{longtable}
+
+The routines return after the atomic update has been issued. Two successive
+non-fetching \ac{AMO} routines may update the remote data object out of order
+unless a call to \FUNC{shmemg\_fence} is introduced between the two calls.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Fetching AMOs}}\label{subsec:gc_fetch_amo}
+
+Atomically fetches or updates a symmetric data object on a specified \ac{PE} and
+returns the prior value.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch(const TYPE *source, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch(shmem_ctx_t ctx,
+    const TYPE *source, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_swap(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_swap(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_compare_swap(TYPE *dest,
+    TYPE cond, TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_compare_swap(shmem_ctx_t ctx,
+    TYPE *dest, TYPE cond, TYPE value, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_add(TYPE *dest,
+    TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_add(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_inc(TYPE *dest, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_inc(shmem_ctx_t ctx,
+    TYPE *dest, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_and(TYPE *dest,
+    TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_and(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_or(TYPE *dest,
+    TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_or(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_xor(TYPE *dest,
+    TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_xor(shmem_ctx_t ctx,
+    TYPE *dest, TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6, and
+\TYPENAME{} is the corresponding type-name component of the routine name.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest or source}{Symmetric address of the data object on the
+remote PE. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The operand to the atomic operation. Not used by
+\FUNC{shmemg\_atomic\_fetch} and \FUNC{shmemg\_atomic\_fetch\_inc}.}
+\apiargument{IN}{cond}{The operand to be compared with the remote value. Used
+only by \FUNC{shmemg\_atomic\_compare\_swap}.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The fetching \ac{AMO} routines perform an atomic read or update to the data
+object at address \VAR{dest} on \ac{PE} \VAR{pe} and return the prior value. The
+operations are:
+
+\begin{longtable}{|p{5.5cm}|p{9cm}|}
+\hline
+\textbf{Routine} & \textbf{Operation} \\
+\hline
+\FUNC{shmemg\_atomic\_fetch} & Atomically fetches the value at \VAR{source}. \\
+\hline
+\FUNC{shmemg\_atomic\_swap} & Atomically swaps the value at \VAR{dest} with \VAR{value} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_compare\_swap} & Compares the value at \VAR{dest} with \VAR{cond}; if equal, replaces it with \VAR{value}. Returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_add} & Atomically adds \VAR{value} to \VAR{dest} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_inc} & Atomically increments \VAR{dest} by one and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_and} & Atomically ANDs \VAR{value} with \VAR{dest} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_or} & Atomically ORs \VAR{value} with \VAR{dest} and returns the prior value. \\
+\hline
+\FUNC{shmemg\_atomic\_fetch\_xor} & Atomically XORs \VAR{value} with \VAR{dest} and returns the prior value. \\
+\hline
+\end{longtable}
+
+The routines return after the fetched value has been delivered to the calling
+\ac{GPU} thread.
+}
+
+\apireturnvalues{
+The value of the remote data object prior to the atomic operation, of type
+\TYPE{}.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Fetching AMOs}}\label{subsec:gc_nbi_amo}
+
+Initiates a nonblocking atomic fetch or update on a symmetric data object on a
+specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_nbi(TYPE *fetch,
+    const TYPE *source, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, const TYPE *source, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_swap_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_swap_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_compare_swap_nbi(TYPE *fetch,
+    TYPE *dest, TYPE cond, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_compare_swap_nbi(
+    shmem_ctx_t ctx, TYPE *fetch, TYPE *dest, TYPE cond,
+    TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_add_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_add_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_inc_nbi(TYPE *fetch,
+    TYPE *dest, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_inc_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_and_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_and_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_or_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_or_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_xor_nbi(TYPE *fetch,
+    TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_xor_nbi(shmem_ctx_t ctx,
+    TYPE *fetch, TYPE *dest, TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard AMO types defined in \openshmem 1.6, and
+\TYPENAME{} is the corresponding type-name component of the routine name.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{fetch}{Local address of the data object to be updated with the
+fetched value. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{OUT}{dest or source}{Symmetric address of the data object on the
+remote PE. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The operand to the atomic operation.}
+\apiargument{IN}{cond}{The operand to be compared with the remote value. Used
+only by \FUNC{shmemg\_atomic\_compare\_swap\_nbi}.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The nonblocking fetching \ac{AMO} routines initiate an atomic fetch or update to
+the data object at address \VAR{dest} on \ac{PE} \VAR{pe}. The routines return
+after initiating the operation. The \VAR{fetch} data object shall not be accessed
+until the operation has been completed by a subsequent call to
+\FUNC{shmemg\_quiet}. Upon completion of \FUNC{shmemg\_quiet}, the prior value
+of the remote data object has been written to \VAR{fetch} and the atomic update,
+if any, has been performed.
+
+The \VAR{fetch}, \VAR{dest}, and \VAR{source} data objects shall reside in the
+\ac{GPU} symmetric heap.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program has every \ac{PE} atomically fetch-and-add one to a shared
+counter that lives on \ac{PE}~0 using \FUNC{shmemg\_long\_atomic\_fetch\_add},
+obtaining a unique ticket value. The counter and the fetched result reside in the
+\ac{GPU} symmetric heap.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_amo_example.c}
+

@@ -1,0 +1,51 @@
+
+The source and destination buffers for all data movement operations and the
+symmetric data objects for all synchronization operations in this section shall
+reside in the \ac{GPU} symmetric heap. Using local \ac{GPU} memory, local CPU
+memory, or memory from the default symmetric heap as source, destination, or
+synchronization operands for GPU-centric communication operations results in
+\textbf{undefined behavior}.
+
+For routines with a \VAR{pe} argument, the \VAR{pe} argument shall identify a
+\ac{PE} in the team associated with the given \VAR{ctx} when provided, or the
+default context otherwise. Passing an invalid \ac{PE} number results in
+\textbf{undefined behavior}.
+
+Each communication routine is provided at three thread granularities:
+
+\begin{longtable}{|p{3cm}|p{3cm}|p{8.5cm}|}
+\hline
+\textbf{Suffix} & \textbf{Granularity} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Suffix} & \textbf{Granularity} & \textbf{Description} \\
+\hline
+\endhead
+\emph{(none)} & Thread & A single \ac{GPU} thread initiates the operation. \\
+\hline
+\texttt{\_tg} & Thread group & All threads in a thread group collectively initiate
+the operation (e.g., a thread block or workgroup). \\
+\hline
+\texttt{\_htg} & Hardware thread group & All threads in a hardware thread group
+collectively initiate the operation (e.g., a warp or wavefront). \\
+\hline
+\end{longtable}
+
+The thread group (\texttt{\_tg}) and hardware thread group (\texttt{\_htg})
+variants are collective across the threads in the specified group. All
+participating threads shall call the routine with the same arguments. If any
+thread in the group does not participate, or if arguments differ across threads,
+the behavior is undefined.
+
+The atomic memory operations (\cref{subsec:gc_amo}) and point-to-point
+synchronization routines (\cref{subsec:gc_p2p}) are provided as typed variants,
+following the naming convention of the \openshmem 1.6 specification. In the name
+of a typed routine, \TYPENAME{} is the type-name component that identifies the
+operand type, while \TYPE{} is the corresponding C type used in the routine
+signature. The supported types and the \TYPE{}-to-\TYPENAME{} correspondence are
+those defined by the \openshmem 1.6 specification for the relevant operation
+category. For example, the type \TYPE{} \KEYWORD{unsigned long long} has
+\TYPENAME{} \texttt{ulonglong}, giving rise to routines such as
+\FUNC{shmemg\_ulonglong\_atomic\_add}.
+

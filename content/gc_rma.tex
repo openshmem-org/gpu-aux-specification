@@ -1,0 +1,309 @@
+
+The \ac{RMA} routines in this section transfer data between a local data object
+and a symmetric data object on a remote \ac{PE}. The operations are one-sided:
+the initiating \ac{GPU} thread provides all communication parameters and the
+remote \ac{PE} need not participate.
+
+The \VAR{source} and \VAR{dest} data objects shall reside in the \ac{GPU}
+symmetric heap.
+
+\subsubsubsection{\textbf{Blocking Put}}\label{subsec:gc_put}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_putmem(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object.}
+\apiargument{IN}{source}{Local address of the data object containing the data to
+be copied. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines return after the data has been copied out of the \VAR{source} array
+on the local \ac{PE}. Delivery of data into the \VAR{dest} data object on the
+destination \ac{PE} may occur in any order. Two successive put routines may
+deliver data out of order unless a call to \FUNC{shmemg\_fence} is introduced
+between the two calls.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Put}}\label{subsec:gc_put_nbi}
+
+Initiates a nonblocking copy of data from a contiguous local data object to a
+data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_putmem_nbi(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_nbi(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_nbi_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_nbi_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_putmem_nbi_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_putmem_nbi_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object.}
+\apiargument{IN}{source}{Local address of the object containing the data to be
+copied. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines return after initiating the operation. The operation is considered
+complete after a subsequent call to \FUNC{shmemg\_quiet}. At the completion of
+\FUNC{shmemg\_quiet}, the data has been copied into the \VAR{dest} array on the
+destination \ac{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Single-Element Put}}\label{subsec:gc_p}
+
+Copies a single data element to a data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_TYPENAME_p(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_p(shmem_ctx_t ctx, TYPE *dest,
+    TYPE value, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard RMA types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Symmetric address of the destination data object. Shall
+reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{value}{The value to be transferred to \VAR{dest}.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_p} routines write \VAR{value} to the symmetric data object at
+address \VAR{dest} on \ac{PE} \VAR{pe}. The \VAR{value} argument is passed by
+value; no memory-location restriction applies to it. The routines return after
+\VAR{value} has been copied out on the local \ac{PE}. Delivery of \VAR{value}
+into the \VAR{dest} data object on the destination \ac{PE} may be ordered using
+\FUNC{shmemg\_fence} and completed using \FUNC{shmemg\_quiet}, as for other put
+operations.
+
+All \FUNC{shmemg\_p} routines operate at single-thread granularity. No thread
+group or hardware thread group variants are defined.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Blocking Get}}\label{subsec:gc_get}
+
+Copies a contiguous symmetric data object from a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_getmem(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_getmem(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_getmem_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_getmem_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_getmem_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_getmem_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Local address of the data object to be updated. Shall
+reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{source}{Symmetric address of the source data object.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines copy a contiguous symmetric data object from \ac{PE} \VAR{pe} to the
+local \VAR{dest} data object. The routines return after the data has been
+delivered to the \VAR{dest} array on the local \ac{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Nonblocking Get}}\label{subsec:gc_get_nbi}
+
+Initiates a nonblocking copy of a contiguous symmetric data object from a
+specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void shmemg_getmem_nbi(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_getmem_nbi(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{Csynopsis}
+
+Thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_getmem_nbi_tg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_getmem_nbi_tg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+Hardware thread group variants:
+\begin{CsynopsisCol}
+SHMEMG_DEVICE void shmemg_getmem_nbi_htg(void *dest, const void *source,
+    size_t nelems, int pe);
+SHMEMG_DEVICE void shmemg_ctx_getmem_nbi_htg(shmem_ctx_t ctx, void *dest,
+    const void *source, size_t nelems, int pe);
+\end{CsynopsisCol}
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{OUT}{dest}{Local address of the data object to be updated. Shall
+reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{source}{Symmetric address of the source data object.}
+\apiargument{IN}{nelems}{Number of bytes to be copied.}
+\apiargument{IN}{pe}{PE number of the remote PE relative to the team associated
+with the given \VAR{ctx} when provided, or the default context otherwise.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The routines initiate a copy of a contiguous symmetric data object from \ac{PE}
+\VAR{pe} to the local \VAR{dest} data object. The routines return after
+initiating the operation. The operation is considered complete after a subsequent
+call to \FUNC{shmemg\_quiet}. At the completion of \FUNC{shmemg\_quiet}, the
+data has been delivered to the \VAR{dest} array on the local \ac{PE}.
+}
+
+\apireturnvalues{
+None.
+}
+\end{apidefinition}
+
+\subsubsubsection{\textbf{Single-Element Get}}\label{subsec:gc_g}
+
+Copies a single data element from a data object on a specified \ac{PE}.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_g(const TYPE *source, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_g(shmem_ctx_t ctx,
+    const TYPE *source, int pe);
+\end{Csynopsis}
+
+where \TYPE{} is one of the standard RMA types defined in \openshmem 1.6.
+
+\begin{apiarguments}
+\apiargument{IN}{ctx}{A context handle. When not provided, the operation is
+performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}.}
+\apiargument{IN}{source}{Symmetric address of the source data object. Shall reside
+in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_g} routines read the value of the symmetric data object at
+address \VAR{source} on \ac{PE} \VAR{pe} and return it to the calling \ac{GPU}
+thread. The routines return after the value has been delivered to the calling
+thread. The returned value is passed by value; no memory-location restriction
+applies to it.
+
+All \FUNC{shmemg\_g} routines operate at single-thread granularity. No thread
+group or hardware thread group variants are defined.
+}
+
+\apireturnvalues{
+The value of the symmetric data object at address \VAR{source} on \ac{PE}
+\VAR{pe}, of type \TYPE{}.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+In the following program each \ac{PE} launches a device kernel that puts one
+element into its right neighbor's symmetric buffer with \FUNC{shmemg\_putmem}
+and completes the transfer with \FUNC{shmemg\_quiet}. Both the source and
+destination operands reside in the \ac{GPU} symmetric heap.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_rma_example.c}
+

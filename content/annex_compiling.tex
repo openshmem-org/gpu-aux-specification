@@ -1,0 +1,38 @@
+
+Compilation of \openshmem GPU programs requires both the \openshmem
+implementation's compile wrapper and the GPU compiler toolchain. The exact
+commands depend on the implementation and GPU vendor.
+
+\subsection*{Compilation}
+
+A typical compilation workflow proceeds as follows:
+
+\begin{enumerate}
+\item GPU device code is compiled using the vendor compiler (e.g., \texttt{nvcc},
+  \texttt{hipcc}, \texttt{icpx -fsycl}).
+\item The resulting objects are linked with the \openshmem library that supports
+  the GPU extensions.
+\item Both \texttt{shmem.h} and \texttt{shmemg.h} are made available in the
+  include path.
+\end{enumerate}
+
+Example (CUDA):
+\begin{lstlisting}[language=bash,style=SourceListingsDefault]
+nvcc -c gpu_kernel.cu -o gpu_kernel.o
+oshcc -c host_code.c -o host_code.o
+oshcc gpu_kernel.o host_code.o -o my_program -lcudart
+\end{lstlisting}
+
+\subsection*{Execution}
+
+Programs are launched using the \openshmem launcher (e.g., \texttt{oshrun}):
+\begin{lstlisting}[language=bash,style=SourceListingsDefault]
+export SHMEM_DEVICE_SYMMETRIC_SIZE=256m
+oshrun -n 4 ./my_program
+\end{lstlisting}
+
+The \ENVVAR{SHMEM\_DEVICE\_SYMMETRIC\_SIZE} environment variable controls the
+size of the \ac{GPU} symmetric heap allocated per \ac{PE}.
+
+\clearpage
+
