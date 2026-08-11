@@ -1,0 +1,49 @@
+
+ISO C language bindings are provided. The device-callable routines defined in
+\cref{sec:gpu_centric} are expressed in ISO C augmented by the
+\CONST{SHMEMG\_DEVICE} execution-space annotation defined in
+\cref{subsec:shmemg_device}. An implementation that provides C bindings for the
+interfaces defined herein may claim conformance to this auxiliary specification.
+
+The header file \HEADER{shmemg.h} shall contain the interfaces, types, and
+constant names defined herein. An \openshmem program that uses the GPU extensions
+shall include \HEADER{shmemg.h} in addition to \HEADER{shmem.h}.
+
+\subsection{Device Execution-Space Annotation}\label{subsec:shmemg_device}
+
+The GPU-centric routines defined in \cref{sec:gpu_centric} are callable from
+within \ac{GPU} device kernels. Their declarations carry an execution-space
+annotation that marks them as device-callable. Because the qualifier required for
+this purpose is specific to the \ac{GPU} compilation environment and is not
+defined by ISO C, this specification expresses it through the
+\CONST{SHMEMG\_DEVICE} function annotation.
+
+\HEADER{shmemg.h} shall define \CONST{SHMEMG\_DEVICE} such that it expands to the
+qualifier or qualifiers required by the current compilation environment for a
+function that is callable from device kernels. In an environment that requires no
+such qualifier, \CONST{SHMEMG\_DEVICE} shall expand to no tokens. A program shall
+use \CONST{SHMEMG\_DEVICE} when declaring device-callable functions and shall not
+use environment-specific qualifiers such as \texttt{\_\_device\_\_} directly. The
+synopsis of each routine in \cref{sec:gpu_centric} is written using
+\CONST{SHMEMG\_DEVICE}.
+
+The following non-normative example illustrates a conforming definition of
+\CONST{SHMEMG\_DEVICE}:
+
+\begin{lstlisting}[style=SourceListingsDefault]
+/* shmemg.h -- execution-space annotation for GPU-centric routine declarations. */
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#  define SHMEMG_DEVICE __device__       /* CUDA / HIP */
+#elif defined(SYCL_LANGUAGE_VERSION)
+#  define SHMEMG_DEVICE SYCL_EXTERNAL    /* SYCL: separately-compiled device function */
+#else
+#  define SHMEMG_DEVICE                  /* ISO C / host-only translation unit: no tokens */
+#endif
+\end{lstlisting}
+
+API routines that are introduced in this auxiliary specification
+use the \texttt{shmemg\_} prefix. An \openshmem program should
+avoid defining routine names, variables, or other identifiers with the prefix
+\texttt{shmemg} using any combination of uppercase letters, lowercase letters,
+and underscores.
+

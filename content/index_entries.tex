@@ -1,0 +1,186 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Index entries
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Library Constants
+\index{SHMEM\_DEVICE\_HOST\_INIT}
+\index{SHMEM\_DEVICE\_KERNEL\_INIT}
+\index{SHMEM\_DEVICE\_CTX}
+\index{SHMEM\_DEVICE\_CTX\_DEFAULT}
+\index{SHMEM\_DEVICE\_TEAM\_WORLD}
+\index{SHMEM\_DEVICE\_TEAM\_SHARED}
+\index{SHMEMG\_DEVICE}
+\index{SHMEM\_CMP\_EQ}
+\index{SHMEM\_CMP\_NE}
+\index{SHMEM\_CMP\_GT}
+\index{SHMEM\_CMP\_GE}
+\index{SHMEM\_CMP\_LT}
+\index{SHMEM\_CMP\_LE}
+
+% Environment Variables
+\index{SHMEM\_DEVICE\_SYMMETRIC\_SIZE}
+
+% Types
+\index{shmem\_ctx\_t}
+\index{shmem\_team\_t}
+
+% Host-side Functions (Initialization and Memory Management)
+\index{shmem\_init\_thread}
+\index{shmem\_team\_create\_ctx}
+\index{shmemg\_malloc}
+\index{shmemg\_calloc}
+\index{shmemg\_align}
+\index{shmemg\_free}
+
+% Host-side Functions (GPU-Aware Extensions)
+\index{shmem\_fence}
+\index{shmem\_ctx\_fence}
+\index{shmem\_quiet}
+\index{shmem\_ctx\_quiet}
+\index{shmem\_put\_signal}
+\index{shmem\_ctx\_put\_signal}
+\index{shmem\_barrier\_all}
+\index{shmem\_barrier}
+
+% GPU-Centric Query Routines
+\index{shmemg\_my\_pe}
+\index{shmemg\_n\_pes}
+
+% GPU-Centric RMA -- Blocking Put
+\index{shmemg\_putmem}
+\index{shmemg\_ctx\_putmem}
+\index{shmemg\_putmem\_tg}
+\index{shmemg\_ctx\_putmem\_tg}
+\index{shmemg\_putmem\_htg}
+\index{shmemg\_ctx\_putmem\_htg}
+
+% GPU-Centric RMA -- Nonblocking Put
+\index{shmemg\_putmem\_nbi}
+\index{shmemg\_ctx\_putmem\_nbi}
+\index{shmemg\_putmem\_nbi\_tg}
+\index{shmemg\_ctx\_putmem\_nbi\_tg}
+\index{shmemg\_putmem\_nbi\_htg}
+\index{shmemg\_ctx\_putmem\_nbi\_htg}
+
+% GPU-Centric RMA -- Single-Element Put
+\index{shmemg\_TYPENAME\_p}
+\index{shmemg\_ctx\_TYPENAME\_p}
+
+% GPU-Centric RMA -- Blocking Get
+\index{shmemg\_getmem}
+\index{shmemg\_ctx\_getmem}
+\index{shmemg\_getmem\_tg}
+\index{shmemg\_ctx\_getmem\_tg}
+\index{shmemg\_getmem\_htg}
+\index{shmemg\_ctx\_getmem\_htg}
+
+% GPU-Centric RMA -- Nonblocking Get
+\index{shmemg\_getmem\_nbi}
+\index{shmemg\_ctx\_getmem\_nbi}
+\index{shmemg\_getmem\_nbi\_tg}
+\index{shmemg\_ctx\_getmem\_nbi\_tg}
+\index{shmemg\_getmem\_nbi\_htg}
+\index{shmemg\_ctx\_getmem\_nbi\_htg}
+
+% GPU-Centric RMA -- Single-Element Get
+\index{shmemg\_TYPENAME\_g}
+\index{shmemg\_ctx\_TYPENAME\_g}
+
+% GPU-Centric AMO -- Non-fetching
+\index{shmemg\_TYPENAME\_atomic\_set}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_set}
+\index{shmemg\_TYPENAME\_atomic\_inc}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_inc}
+\index{shmemg\_TYPENAME\_atomic\_add}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_add}
+\index{shmemg\_TYPENAME\_atomic\_and}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_and}
+\index{shmemg\_TYPENAME\_atomic\_or}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_or}
+\index{shmemg\_TYPENAME\_atomic\_xor}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_xor}
+
+% GPU-Centric AMO -- Fetching
+\index{shmemg\_TYPENAME\_atomic\_fetch}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch}
+\index{shmemg\_TYPENAME\_atomic\_swap}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_swap}
+\index{shmemg\_TYPENAME\_atomic\_compare\_swap}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_compare\_swap}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_inc}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_inc}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_add}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_add}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_and}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_and}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_or}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_or}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_xor}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_xor}
+
+% GPU-Centric AMO -- Nonblocking Fetching
+\index{shmemg\_TYPENAME\_atomic\_fetch\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_swap\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_swap\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_compare\_swap\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_compare\_swap\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_inc\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_inc\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_add\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_add\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_and\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_and\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_or\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_or\_nbi}
+\index{shmemg\_TYPENAME\_atomic\_fetch\_xor\_nbi}
+\index{shmemg\_ctx\_TYPENAME\_atomic\_fetch\_xor\_nbi}
+
+% GPU-Centric Signaling
+\index{shmemg\_putmem\_signal}
+\index{shmemg\_ctx\_putmem\_signal}
+\index{shmemg\_putmem\_signal\_tg}
+\index{shmemg\_ctx\_putmem\_signal\_tg}
+\index{shmemg\_putmem\_signal\_htg}
+\index{shmemg\_ctx\_putmem\_signal\_htg}
+\index{shmemg\_putmem\_signal\_nbi}
+\index{shmemg\_ctx\_putmem\_signal\_nbi}
+\index{shmemg\_putmem\_signal\_nbi\_tg}
+\index{shmemg\_ctx\_putmem\_signal\_nbi\_tg}
+\index{shmemg\_putmem\_signal\_nbi\_htg}
+\index{shmemg\_ctx\_putmem\_signal\_nbi\_htg}
+\index{shmemg\_signal\_fetch}
+
+% GPU-Centric Point-to-Point Synchronization
+\index{shmemg\_TYPENAME\_wait\_until}
+\index{shmemg\_TYPENAME\_wait\_until\_tg}
+\index{shmemg\_TYPENAME\_wait\_until\_htg}
+\index{shmemg\_TYPENAME\_test}
+\index{shmemg\_TYPENAME\_test\_tg}
+\index{shmemg\_TYPENAME\_test\_htg}
+\index{shmemg\_signal\_wait\_until}
+\index{shmemg\_signal\_wait\_until\_tg}
+\index{shmemg\_signal\_wait\_until\_htg}
+
+% GPU-Centric Memory Ordering
+\index{shmemg\_fence}
+\index{shmemg\_ctx\_fence}
+\index{shmemg\_fence\_tg}
+\index{shmemg\_ctx\_fence\_tg}
+\index{shmemg\_fence\_htg}
+\index{shmemg\_ctx\_fence\_htg}
+\index{shmemg\_quiet}
+\index{shmemg\_ctx\_quiet}
+\index{shmemg\_quiet\_tg}
+\index{shmemg\_ctx\_quiet\_tg}
+\index{shmemg\_quiet\_htg}
+\index{shmemg\_ctx\_quiet\_htg}
+
+% GPU-Centric Collective Operations
+\index{shmemg\_sync\_all}
+\index{shmemg\_sync\_all\_tg}
+\index{shmemg\_sync\_all\_htg}
+\index{shmemg\_team\_sync}
+\index{shmemg\_team\_sync\_tg}
+\index{shmemg\_team\_sync\_htg}
+

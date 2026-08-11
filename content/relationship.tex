@@ -1,0 +1,25 @@
+
+The \openshmem Auxiliary Specification for GPU Support is based on the
+\openshmem specification version 1.6. It supplements, but does not replace, the
+\openshmem 1.6 specification. All routines, semantics, and requirements defined
+in \openshmem 1.6 remain valid. Where new concepts are introduced or existing
+semantics are modified, such changes are explicitly identified.
+
+The extensions maintain the fundamental principles established by the \openshmem
+specification, including:
+\begin{itemize}
+\item Processing elements (\acp{PE}) and symmetric data objects
+\item Team-based process subsets and communication contexts
+\item Memory ordering and synchronization guarantees
+\item Collective and point-to-point communication semantics
+\end{itemize}
+
+Implementation of these extensions is optional. An \openshmem implementation may
+support GPU-aware communication, GPU-centric communication, both, or neither.
+Applications may query implementation capabilities at runtime.
+Examples of GPU-aware and GPU-centric communication are provided in
+\cref{annex:writing}.
+
+Applications that do not use GPU-attached memory buffers or the interfaces
+defined herein shall continue to execute correctly.
+

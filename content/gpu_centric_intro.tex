@@ -1,0 +1,25 @@
+
+This section defines routines that shall be invoked from within \ac{GPU} device
+kernels. Calling these routines from the host results in \textbf{undefined
+behavior}.
+
+The \openshmem library shall have been initialized with
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT} and the corresponding capability shall have
+been returned in the \VAR{provided} argument of \FUNC{shmem\_init\_thread}.
+Calling any routine in this section without the required initialization results
+in \textbf{undefined behavior}.
+
+All routines in this section use the \texttt{shmemg\_} prefix and operate on
+symmetric data objects allocated from the \ac{GPU} symmetric heap. A symmetric
+address and a target \ac{PE} identifier are used to address remote data objects.
+Unless otherwise noted, any \ac{GPU} thread within a device kernel may call these
+routines.
+
+In the synopses that follow, the \CONST{SHMEMG\_DEVICE} annotation
+(\cref{subsec:shmemg_device}) marks each routine as callable from a \ac{GPU}
+device kernel. It expands to the execution-space qualifier required by the
+compilation environment, or to no tokens where none is required. The code
+examples in this specification use CUDA syntax, such as \texttt{\_\_global\_\_}
+kernels and vendor-specific kernel-launch syntax, for concreteness; equivalent
+constructs apply in other \ac{GPU} programming environments.
+

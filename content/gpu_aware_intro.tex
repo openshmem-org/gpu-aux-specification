@@ -1,0 +1,48 @@
+
+The \openshmem \ac{RMA}, \ac{AMO}, signaling, point-to-point synchronization, and
+collective routines defined in \openshmem 1.6 may be used with GPU-attached
+memory buffers as operands. The routine interfaces are unchanged. The tables
+below specify the allowed memory locations for each argument.
+
+The operations in this section are invoked from the host \ac{PE}. Using the
+routines in this section with GPU-attached memory operands requires that the
+\openshmem library has been initialized with \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+and that the corresponding capability was returned in the \VAR{provided} argument
+of \FUNC{shmem\_init\_thread}. Doing so without \CONST{SHMEM\_DEVICE\_HOST\_INIT}
+having been returned in \VAR{provided} results in \textbf{undefined behavior}.
+
+The following terms identify the memory locations referenced in this section:
+
+\begin{longtable}{|p{4cm}|p{10.5cm}|}
+\hline
+\textbf{Term} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Term} & \textbf{Description} \\
+\hline
+\endhead
+Default symmetric heap & Memory allocated by \FUNC{shmem\_malloc},
+\FUNC{shmem\_calloc}, \FUNC{shmem\_align}, or \FUNC{shmem\_malloc\_with\_hints}
+from the default (CPU-attached) symmetric heap. \\
+\hline
+GPU symmetric heap & Memory allocated by \FUNC{shmemg\_malloc},
+\FUNC{shmemg\_calloc}, or \FUNC{shmemg\_align} from the \ac{GPU} symmetric heap. \\
+\hline
+Static/global data & Symmetric data objects defined with static or global storage
+duration. \\
+\hline
+Local CPU memory & Private (non-symmetric) CPU-attached memory, including stack,
+heap, and data segments. \\
+\hline
+Local GPU memory & Private (non-symmetric) GPU-attached memory, including GPU
+memory allocated by the GPU runtime (e.g., \texttt{cudaMalloc},
+\texttt{hipMalloc}) that is not part of the \ac{GPU} symmetric heap. \\
+\hline
+\end{longtable}
+
+Unless otherwise specified, passing an argument that refers to a memory location
+other than those permitted by the corresponding argument-constraint table
+results in \textbf{undefined behavior}. Routine-specific exceptions to this rule
+are stated explicitly where they apply.
+

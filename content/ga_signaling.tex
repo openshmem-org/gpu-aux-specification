@@ -1,0 +1,61 @@
+
+The put-with-signal routines provide a method for copying data from a contiguous
+local data object to a data object on a specified \ac{PE} and subsequently
+updating a remote flag to signal completion. The signal-fetch routine provides a
+method for reading the signal object.
+
+\subsubsection{Put-with-Signal}\label{subsec:ga_put_signal}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE} and subsequently updates a remote flag to signal completion.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{sig\_addr} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{signal} and \VAR{sig\_op} arguments are passed by value; no memory
+location restriction applies.
+
+\subsubsection{Nonblocking Put-with-Signal}\label{subsec:ga_put_signal_nbi}
+
+Copies data from a contiguous local data
+object to a data object on a specified \ac{PE} and subsequently updates a remote
+flag to signal completion.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{sig\_addr} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{source} data object shall not be modified until the operation has been
+completed by a call to \FUNC{shmem\_quiet}, as specified in \openshmem 1.6.
+
+\subsubsection{Signal Fetch}\label{subsec:ga_signal_fetch}
+
+Fetches the signal update on a local data object.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{sig\_addr} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+

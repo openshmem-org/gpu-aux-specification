@@ -1,0 +1,56 @@
+
+An \ac{AMO} is a one-sided communication mechanism that combines memory read,
+update, or write operations with atomicity guarantees. The \acp{AMO} are
+performed only on symmetric objects. Two types of \ac{AMO} routines are defined:
+fetching routines, which return the original value of the remote data object, and
+non-fetching routines, which update the remote data object without returning a
+value.
+
+The \VAR{value}, \VAR{cond}, and \VAR{cmp\_value} arguments are passed by value;
+no memory location restriction applies.
+
+\subsubsection{Non-fetching AMOs}\label{subsec:ga_nonfetch_amo}
+
+Atomically update a remote data object.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Fetching AMOs}\label{subsec:ga_fetch_amo}
+
+Atomically fetch or update a remote data object and return the prior value.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} or \VAR{source} & IN/OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The return value is passed by value; no memory location restriction applies.
+
+\subsubsection{Nonblocking AMOs}\label{subsec:ga_nbi_amo}
+
+The nonblocking \ac{AMO} routines atomically fetch or update a remote data object
+without waiting for the operation to complete.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} or \VAR{source} & IN/OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\VAR{fetch} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{fetch} data object shall not be accessed until the operation has been
+completed by a call to \FUNC{shmem\_quiet}, as specified in \openshmem 1.6.
+

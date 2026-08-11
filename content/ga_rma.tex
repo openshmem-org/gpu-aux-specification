@@ -1,0 +1,132 @@
+
+The \ac{RMA} routines defined in \openshmem 1.6 transfer data between a local
+data object and a symmetric data object on a remote \ac{PE}. The tables below
+specify the allowed memory locations for source and destination arguments.
+
+\subsubsection{Blocking Put}\label{subsec:ga_blocking_put}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Single-Element Put}\label{subsec:ga_scalar_put}
+
+Copies one data item to a remote \ac{PE}. The \VAR{value} argument is passed by
+value; no memory location restriction applies.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Strided Put}\label{subsec:ga_strided_put}
+
+Copies strided data to a specified \ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Nonblocking Put}\label{subsec:ga_nbi_put}
+
+Copies data from a contiguous local data object to a data object on a specified
+\ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{dest} & OUT & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{source} data object shall not be modified until the operation has been
+completed by a call to \FUNC{shmem\_quiet} or \FUNC{shmem\_pe\_quiet}, as
+specified in \openshmem 1.6.
+
+\subsubsection{Blocking Get}\label{subsec:ga_blocking_get}
+
+Copies data from a specified \ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Single-Element Get}\label{subsec:ga_scalar_get}
+
+Copies one data item from a remote \ac{PE}. The return value is passed by value;
+no memory location restriction applies.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Strided Get}\label{subsec:ga_strided_get}
+
+Copies strided data from a specified \ac{PE}.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+\subsubsection{Nonblocking Get}\label{subsec:ga_nbi_get}
+
+Copies data from a contiguous remote data object on the specified \ac{PE} to the
+local data object.
+
+\begin{longtable}{|p{2.5cm}|p{2cm}|p{9.5cm}|}
+\hline
+\textbf{Argument} & \textbf{Direction} & \textbf{Allowed Locations} \\
+\hline
+\VAR{dest} & OUT & Local CPU memory, local GPU memory, default symmetric heap,
+GPU symmetric heap, static/global data \\
+\hline
+\VAR{source} & IN & Default symmetric heap, GPU symmetric heap, static/global data \\
+\hline
+\end{longtable}
+
+The \VAR{dest} data object shall not be accessed until the operation has been
+completed by a call to \FUNC{shmem\_quiet} or \FUNC{shmem\_pe\_quiet}, as
+specified in \openshmem 1.6.
+

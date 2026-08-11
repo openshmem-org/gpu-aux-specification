@@ -1,0 +1,57 @@
+
+Two predefined device teams supplement the predefined teams defined by the
+\openshmem specification, \CONST{SHMEM\_TEAM\_WORLD} and
+\CONST{SHMEM\_TEAM\_SHARED}. The existing \FUNC{shmem\_team\_split\_*} routines
+may be used with device teams as parent teams.
+
+\subsection{Predefined Device Teams}\label{subsec:predefined_device_teams}
+
+\subsubsection{SHMEM\_DEVICE\_TEAM\_WORLD}\label{subsec:shmem_device_team_world}
+
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} is a predefined team of type
+\CTYPE{shmem\_team\_t} that contains all \acp{PE} in the \openshmem program.
+It has the same membership as \CONST{SHMEM\_TEAM\_WORLD}, but it is a separate
+predefined team and forms a distinct atomicity domain (see
+\cref{subsec:atomicity_domains}).
+
+\subsubsection{SHMEM\_DEVICE\_TEAM\_SHARED}\label{subsec:shmem_device_team_shared}
+
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} is a predefined team of type
+\CTYPE{shmem\_team\_t} that corresponds to the set of \acp{PE} that share a
+\ac{GPU} memory domain. \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} refers to the team
+of all \acp{PE} that would mutually return a non-null address from a call to
+\FUNC{shmem\_ptr} or \FUNC{shmem\_team\_ptr} for all \ac{GPU} symmetric heap
+objects. That is, \FUNC{shmem\_ptr} and \FUNC{shmem\_team\_ptr} must return a
+non-null pointer to the local \ac{PE} for all \ac{GPU} symmetric heap objects on
+all target \acp{PE} in the team. This means that \ac{GPU} symmetric heap objects
+on each \ac{PE} are directly load/store accessible by all \acp{PE} in the team.
+
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} may or may not correspond to the same set of
+\acp{PE} as \CONST{SHMEM\_TEAM\_SHARED}. The membership of
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} depends on the \ac{GPU} memory topology,
+which may differ from the CPU memory topology that determines
+\CONST{SHMEM\_TEAM\_SHARED}.
+
+\subsection{Atomicity Domains}\label{subsec:atomicity_domains}
+
+The \openshmem 1.6 specification defines an atomicity domain as a set of
+communication contexts whose associated teams are all split by (possibly
+recursive) calls to a \FUNC{shmem\_team\_split\_*} routine from a common
+predefined team. The \openshmem 1.6 specification defines two predefined teams,
+\CONST{SHMEM\_TEAM\_WORLD} and \CONST{SHMEM\_TEAM\_SHARED}, each forming a
+separate atomicity domain.
+
+Two additional predefined teams, \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, each form a separate atomicity domain.
+These device atomicity domains are independent of each other and independent of
+the atomicity domains rooted at \CONST{SHMEM\_TEAM\_WORLD} and
+\CONST{SHMEM\_TEAM\_SHARED}.
+
+\textbf{Warning:} Atomic operations that use communication contexts in different
+atomicity domains to access the same location concurrently result in
+\textbf{undefined behavior}, as specified in the \openshmem specification. This
+applies equally to contexts derived from device teams. For example, concurrent
+atomic operations on the same location using a context derived from
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and a context derived from
+\CONST{SHMEM\_TEAM\_WORLD} result in undefined behavior.
+

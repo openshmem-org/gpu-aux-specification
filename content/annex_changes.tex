@@ -1,0 +1,28 @@
+
+\subsection*{Version 0.1}
+
+\begin{itemize}
+\item Initial release of the \openshmem Auxiliary Specification for GPU Support.
+\item Defined GPU-aware communication model for host-initiated operations with
+  GPU-attached memory buffers.
+\item Defined GPU-centric communication model for device-initiated operations
+  from within \ac{GPU} kernels.
+\item Introduced \ac{GPU} symmetric heap and associated memory management
+  routines (\FUNC{shmemg\_malloc}, \FUNC{shmemg\_calloc}, \FUNC{shmemg\_align},
+  \FUNC{shmemg\_free}).
+\item Defined predefined device teams (\CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
+  \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}) and default device context
+  (\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}).
+\item Defined GPU-centric \ac{RMA}, put-with-signal, memory ordering, and
+  collective operations with thread, thread group, and hardware thread group
+  granularity.
+\item Defined GPU-centric \ac{AMO}, signal-fetch, and point-to-point
+  synchronization operations at single-thread granularity.
+\item Specified cross-domain ordering semantics for \FUNC{shmem\_fence},
+  \FUNC{shmem\_quiet}, and \FUNC{shmem\_put\_signal} when GPU-aware communication
+  is enabled.
+\item Documented all conditions that result in undefined behavior (Annex~C).
+\end{itemize}
+
+\clearpage
+

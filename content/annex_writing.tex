@@ -1,0 +1,37 @@
+
+This annex describes how \openshmem programs use the GPU extensions defined in
+this specification.
+
+A typical \openshmem GPU program proceeds as follows:
+
+\begin{enumerate}
+\item The desired \ac{GPU} is selected and made current using the vendor-specific
+  GPU runtime (e.g., \texttt{cudaSetDevice}, \texttt{hipSetDevice}).
+\item The \openshmem library is initialized with GPU support by calling
+  \FUNC{shmem\_init\_thread} with \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+  \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, or both.
+\item The \VAR{provided} argument is examined to confirm that the requested
+  capabilities are available.
+\item Symmetric memory is allocated from the \ac{GPU} symmetric heap using
+  \FUNC{shmemg\_malloc}, \FUNC{shmemg\_calloc}, or \FUNC{shmemg\_align}.
+\item Communication is performed:
+  \begin{itemize}
+  \item \textbf{GPU-aware:} standard \openshmem routines are invoked from the
+    host with GPU-attached memory as operands.
+  \item \textbf{GPU-centric:} device kernels that invoke \texttt{shmemg\_}
+    routines directly are launched.
+  \end{itemize}
+\item \ac{GPU} symmetric heap memory is freed using \FUNC{shmemg\_free}.
+\item The \openshmem library is finalized using \FUNC{shmem\_finalize}.
+\end{enumerate}
+
+\subsection*{Example: GPU-Aware Put}
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gpu_aware_put_example.c}
+
+\subsection*{Example: GPU-Centric Put}
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gpu_centric_put_example.c}
+
+\clearpage
+

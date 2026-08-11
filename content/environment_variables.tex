@@ -1,0 +1,33 @@
+
+The \openshmem GPU specification provides a set of environment variables that
+allow users to configure GPU-related aspects of the \openshmem implementation.
+These variables supplement the environment variables defined by the \openshmem
+1.6 specification. Implementations are free to define additional GPU-related
+environment variables.
+
+\begin{longtable}{|p{4.5cm}|p{3cm}|p{7cm}|}
+\hline
+\textbf{Variable} & \textbf{Value} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Variable} & \textbf{Value} & \textbf{Description} \\
+\hline
+\endhead
+\EnvVarRef{SHMEM\_DEVICE\_SYMMETRIC\_SIZE} &
+Non-negative integer or floating-point with optional suffix &
+Specifies the size (in bytes) of the \ac{GPU} symmetric heap per \ac{PE}. The
+\ac{GPU} symmetric heap is allocated from GPU-attached memory on the \ac{GPU}
+selected by the \ac{PE} prior to library initialization. The allowed character
+suffixes are: \textbf{k} or \textbf{K} ($2^{10}$), \textbf{m} or \textbf{M}
+($2^{20}$), \textbf{g} or \textbf{G} ($2^{30}$), \textbf{t} or \textbf{T}
+($2^{40}$). For example, the string ``20m'' is equivalent to 20971520 bytes. An
+invalid value is an error. If no \ac{GPU} support is requested in
+\FUNC{shmem\_init\_thread} (neither \CONST{SHMEM\_DEVICE\_HOST\_INIT} nor
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}), no \ac{GPU} symmetric heap is created and
+this variable has no effect. \\
+\hline
+\end{longtable}
+
+\clearpage
+

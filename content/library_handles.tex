@@ -1,0 +1,36 @@
+
+The \openshmem GPU specification provides a set of predefined named constant
+handles. All named constants may be used in initialization expressions or
+assignments. These handles supplement the handles defined by the \openshmem 1.6
+specification.
+
+\begin{longtable}{|p{5.5cm}|p{9cm}|}
+\hline
+\textbf{Handle} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Handle} & \textbf{Description} \\
+\hline
+\endhead
+\LibHandleRef{SHMEM\_DEVICE\_TEAM\_WORLD} &
+Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team containing all
+\acp{PE} in the \openshmem program. \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} has the
+same membership as \CONST{SHMEM\_TEAM\_WORLD}, but is a separate predefined team.
+This handle may be used in collective operations and team-based communication
+routines that operate on the \ac{GPU} symmetric heap. \\
+\hline
+\LibHandleRef{SHMEM\_DEVICE\_TEAM\_SHARED} &
+Handle of type \CTYPE{shmem\_team\_t} that corresponds to a team of \acp{PE}
+that share a \ac{GPU} memory domain. \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} may or
+may not correspond to the same set of \acp{PE} as \CONST{SHMEM\_TEAM\_SHARED}. \\
+\hline
+\LibHandleRef{SHMEM\_DEVICE\_CTX\_DEFAULT} &
+Handle of type \CTYPE{shmem\_ctx\_t} that corresponds to the default
+communication context for GPU-centric operations. All GPU-centric communication
+operations and synchronizations that do not specify a context shall be performed
+on this default device context. \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} shall not be
+used for GPU-aware operations. \\
+\hline
+\end{longtable}
+

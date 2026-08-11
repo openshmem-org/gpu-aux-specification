@@ -1,0 +1,46 @@
+
+The \openshmem GPU specification provides a set of compile-time constants that
+may be used to specify options to \ac{API} routines or provide
+implementation-specific parameters. These constants supplement the constants
+defined by the \openshmem 1.6 specification.
+
+\begin{longtable}{|p{5.5cm}|p{9cm}|}
+\hline
+\textbf{Constant} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Constant} & \textbf{Description} \\
+\hline
+\endhead
+\LibConstRef{SHMEM\_DEVICE\_HOST\_INIT} &
+Option to \FUNC{shmem\_init\_thread} that requests GPU-aware communication
+support. When this option is provided, the implementation shall prepare the
+runtime for GPU-aware operations on the \ac{GPU} symmetric heap. Any requested
+GPU support option establishes the PE-to-GPU association and initializes the
+\ac{GPU} symmetric heap, as described in \FUNC{shmem\_init\_thread}. An
+implementation may support \CONST{SHMEM\_DEVICE\_HOST\_INIT},
+\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or neither. \\
+\hline
+\LibConstRef{SHMEM\_DEVICE\_KERNEL\_INIT} &
+Option to \FUNC{shmem\_init\_thread} that requests GPU-centric communication
+support. When this option is provided, the implementation shall prepare the
+runtime for communication operations invoked from within GPU kernels. Any
+requested GPU support option establishes the PE-to-GPU association and
+initializes the \ac{GPU} symmetric heap, as described in
+\FUNC{shmem\_init\_thread}. An implementation may support
+\CONST{SHMEM\_DEVICE\_HOST\_INIT}, \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, both, or
+neither. \\
+\hline
+\LibConstRef{SHMEM\_DEVICE\_CTX} &
+Context creation option that specifies the communication context shall support
+GPU-centric operations. A context created with this option may be used from
+within \ac{GPU} execution contexts. Contexts created with
+\CONST{SHMEM\_DEVICE\_CTX} shall not be used for GPU-aware operations, and
+contexts created without this option shall not be used for GPU-centric
+operations. This option may be combined with other context creation options
+defined in \openshmem 1.6, such as \CONST{SHMEM\_CTX\_SERIALIZED} or
+\CONST{SHMEM\_CTX\_PRIVATE}. \\
+\hline
+\end{longtable}
+

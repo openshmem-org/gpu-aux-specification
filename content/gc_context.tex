@@ -1,0 +1,36 @@
+
+Only communication contexts associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD},
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED}, or teams created from either of them through
+\FUNC{shmem\_team\_split\_strided} and \FUNC{shmem\_team\_split\_2d} routines are
+capable of performing GPU-centric communication operations from within \ac{GPU}
+kernels. Using a context associated with any other team for GPU-centric
+operations results in \textbf{undefined behavior}.
+
+\CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} is a predefined communication context of
+type \CTYPE{shmem\_ctx\_t} associated with \CONST{SHMEM\_DEVICE\_TEAM\_WORLD}.
+All GPU-centric communication operations and synchronizations that do not specify
+a context shall be performed on \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT}. \ac{GPU}
+threads may pass \CONST{SHMEM\_DEVICE\_CTX\_DEFAULT} to any device-callable
+routine that accepts a context argument.
+
+Explicit device contexts are created on the host using \FUNC{shmem\_ctx\_create}
+or \FUNC{shmem\_team\_create\_ctx} with the \CONST{SHMEM\_DEVICE\_CTX} option. A
+context created with \FUNC{shmem\_ctx\_create} is associated with
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD}. For \FUNC{shmem\_team\_create\_ctx}, the team
+argument shall be an existing device team. Once created, these contexts may be
+passed to device-callable routines from within \ac{GPU} kernels. Device contexts
+shall not be created or destroyed from within \ac{GPU} kernels.
+
+Using a device context for GPU-aware (host-initiated) operations, or using a
+non-device context (including \CONST{SHMEM\_CTX\_DEFAULT}) for GPU-centric
+operations, results in \textbf{undefined behavior}.
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program creates an explicit device context on the host from
+\CONST{SHMEM\_DEVICE\_TEAM\_WORLD} with the \CONST{SHMEM\_DEVICE\_CTX} option,
+passes it to a device kernel that issues a context-qualified put and completes it
+with \FUNC{shmemg\_ctx\_quiet}, and destroys the context on the host. Device
+contexts are created and destroyed only on the host.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_context_example.c}
+

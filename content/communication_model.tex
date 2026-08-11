@@ -1,0 +1,83 @@
+
+The one-sided communication semantics defined by the \openshmem specification
+apply to symmetric objects allocated from the \ac{GPU} symmetric heap. All
+routines defined in \openshmem 1.6---including \ac{RMA}, \ac{AMO}, signaling,
+synchronization, and collective operations---retain their specified behavior and
+may be used with GPU-attached memory buffers.
+
+The remote operand in a communication operation may reside in either the default
+(CPU-attached) symmetric heap defined by \openshmem 1.6 or the \ac{GPU}
+symmetric heap for the GPU-aware communication operations. For GPU-centric
+communication operations, the remote operand shall reside in the \ac{GPU}
+symmetric heap only. The same \openshmem routine shall be used regardless of whether
+the remote memory is CPU-attached or GPU-attached.
+
+\subsection{GPU-Aware Communication}\label{subsec:gpu_aware_comm}
+
+GPU-aware communication allows GPU-attached memory buffers to be used as
+operands in existing \openshmem routines without modification to interfaces or
+calling conventions. GPU-attached memory buffers may be used as:
+
+\begin{itemize}
+\item \textbf{Source operands} in put operations
+\item \textbf{Destination operands} in get operations
+\item \textbf{Local operands} in atomic memory operations
+\item \textbf{Target buffers} in point-to-point synchronization operations
+\item \textbf{Local buffers} in collective operations
+\end{itemize}
+
+When a GPU-attached memory buffer is used as an operand in an \openshmem
+routine, the \openshmem implementation shall make the contents of that buffer
+available to the communication operation and shall make updates visible according
+to the completion and ordering semantics defined in \openshmem 1.6. This
+requirement does not prescribe the implementation mechanism, such as direct
+network access to GPU-attached memory, staging through CPU-attached memory, or
+runtime synchronization with the \ac{GPU} memory hierarchy.
+
+\subsection{GPU-Centric Communication}\label{subsec:gpu_centric_comm}
+
+GPU-centric communication allows \ac{GPU} threads to invoke put, get, atomic,
+signaling, synchronization, and collective operations directly from \ac{GPU}
+execution contexts. Device-initiated
+operations use the same addressing model defined by the \openshmem
+specification: a symmetric address and a target \ac{PE} identifier. The
+symmetric address shall be within the allocated region returned by the \ac{GPU} symmetric heap
+allocation routine and is valid only at the \ac{PE} where the allocation was
+performed.
+
+\textbf{Note:} Support for GPU-centric communication is independent of support
+for GPU-aware communication; an implementation may support either or both.
+
+\subsection{Supported Operations}\label{subsec:supported_operations}
+
+The following operations are supported on symmetric objects in the \ac{GPU}
+symmetric heap:
+
+\begin{longtable}{|p{5cm}|p{9cm}|}
+\hline
+\textbf{Operation} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Operation} & \textbf{Description} \\
+\hline
+\endhead
+\ac{RMA} & Put and get operations, including bulk and single-element variants \\
+\hline
+\ac{AMO} & Fetch, non-fetch, and compare-and-swap variants \\
+\hline
+Signaling Operations & Combined data transfer and signal update at the target \ac{PE} \\
+\hline
+Synchronization & Barrier, fence, quiet, and point-to-point wait/test primitives \\
+\hline
+\end{longtable}
+
+\subsection{Ordering and Completion}\label{subsec:ordering_completion}
+
+Ordering and completion semantics follow the \openshmem memory model. Updates to
+symmetric objects are unordered by default. A \ac{PE} may enforce point-to-point
+ordering using \FUNC{shmem\_fence}. \FUNC{shmem\_quiet} may be used to ensure
+completion of prior communication operations issued by the calling \ac{PE}.
+Barrier and point-to-point wait/test operations may be used to coordinate access
+across \acp{PE}.
+
