@@ -308,7 +308,7 @@ may be used with GPU-attached memory buffers.
 The remote operand in a communication operation may reside in either the default
 (CPU-attached) symmetric heap defined by \openshmem 1.6 or the \ac{GPU}
 symmetric heap for the GPU-aware communication operations. For GPU-centric
-communication operations, the remote operand should reside in the \ac{GPU}
+communication operations, the remote operand shall reside in the \ac{GPU}
 symmetric heap only. The same \openshmem routine shall be used regardless of whether
 the remote memory is CPU-attached or GPU-attached.
 
@@ -3213,30 +3213,30 @@ int main(void) {
 
 \section{Writing OpenSHMEM GPU Programs}\label{annex:writing}
 
-This annex provides guidance on writing \openshmem programs that use the GPU
-extensions defined in this specification.
+This annex describes how \openshmem programs use the GPU extensions defined in
+this specification.
 
-A typical \openshmem GPU program follows these steps:
+A typical \openshmem GPU program proceeds as follows:
 
 \begin{enumerate}
-\item Select and make current the desired \ac{GPU} using the vendor-specific GPU
-  runtime (e.g., \texttt{cudaSetDevice}, \texttt{hipSetDevice}).
-\item Initialize the \openshmem library with GPU support by calling
+\item The desired \ac{GPU} is selected and made current using the vendor-specific
+  GPU runtime (e.g., \texttt{cudaSetDevice}, \texttt{hipSetDevice}).
+\item The \openshmem library is initialized with GPU support by calling
   \FUNC{shmem\_init\_thread} with \CONST{SHMEM\_DEVICE\_HOST\_INIT},
   \CONST{SHMEM\_DEVICE\_KERNEL\_INIT}, or both.
-\item Check the \VAR{provided} argument to confirm the requested capabilities are
-  available.
-\item Allocate symmetric memory on the \ac{GPU} symmetric heap using
+\item The \VAR{provided} argument is examined to confirm that the requested
+  capabilities are available.
+\item Symmetric memory is allocated from the \ac{GPU} symmetric heap using
   \FUNC{shmemg\_malloc}, \FUNC{shmemg\_calloc}, or \FUNC{shmemg\_align}.
-\item Perform communication:
+\item Communication is performed:
   \begin{itemize}
-  \item \textbf{GPU-aware:} Use standard \openshmem routines from the host with
-    GPU-attached memory as operands.
-  \item \textbf{GPU-centric:} Launch device kernels that call \texttt{shmemg\_}
-    routines directly.
+  \item \textbf{GPU-aware:} standard \openshmem routines are invoked from the
+    host with GPU-attached memory as operands.
+  \item \textbf{GPU-centric:} device kernels that invoke \texttt{shmemg\_}
+    routines directly are launched.
   \end{itemize}
-\item Free GPU symmetric heap memory using \FUNC{shmemg\_free}.
-\item Finalize the \openshmem library using \FUNC{shmem\_finalize}.
+\item \ac{GPU} symmetric heap memory is freed using \FUNC{shmemg\_free}.
+\item The \openshmem library is finalized using \FUNC{shmem\_finalize}.
 \end{enumerate}
 
 \subsection*{Example: GPU-Aware Put}
@@ -3332,14 +3332,15 @@ commands depend on the implementation and GPU vendor.
 
 \subsection*{Compilation}
 
-A typical compilation workflow is:
+A typical compilation workflow proceeds as follows:
 
 \begin{enumerate}
-\item Compile GPU device code using the vendor compiler (e.g., \texttt{nvcc},
+\item GPU device code is compiled using the vendor compiler (e.g., \texttt{nvcc},
   \texttt{hipcc}, \texttt{icpx -fsycl}).
-\item Link with the \openshmem library that supports GPU extensions.
-\item Ensure both \texttt{shmem.h} and \texttt{shmemg.h} are in the include
-  path.
+\item The resulting objects are linked with the \openshmem library that supports
+  the GPU extensions.
+\item Both \texttt{shmem.h} and \texttt{shmemg.h} are made available in the
+  include path.
 \end{enumerate}
 
 Example (CUDA):
