@@ -495,13 +495,47 @@ behavior}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Language Bindings and Conformance}\label{sec:bindings}
 
-ISO C language bindings are provided. An implementation that provides C bindings
-for the interfaces defined herein may claim conformance to this auxiliary
-specification.
+ISO C language bindings are provided. The device-callable routines defined in
+\cref{sec:gpu_centric} are expressed in ISO C augmented by the
+\CONST{SHMEMG\_DEVICE} execution-space annotation defined in
+\cref{subsec:shmemg_device}. An implementation that provides C bindings for the
+interfaces defined herein may claim conformance to this auxiliary specification.
 
 The header file \HEADER{shmemg.h} shall contain the interfaces, types, and
 constant names defined herein. An \openshmem program that uses the GPU extensions
 shall include \HEADER{shmemg.h} in addition to \HEADER{shmem.h}.
+
+\subsection{Device Execution-Space Annotation}\label{subsec:shmemg_device}
+
+The GPU-centric routines defined in \cref{sec:gpu_centric} are callable from
+within \ac{GPU} device kernels. Their declarations carry an execution-space
+annotation that marks them as device-callable. Because the qualifier required for
+this purpose is specific to the \ac{GPU} compilation environment and is not
+defined by ISO C, this specification expresses it through the
+\CONST{SHMEMG\_DEVICE} function annotation.
+
+\HEADER{shmemg.h} shall define \CONST{SHMEMG\_DEVICE} such that it expands to the
+qualifier or qualifiers required by the current compilation environment for a
+function that is callable from device kernels. In an environment that requires no
+such qualifier, \CONST{SHMEMG\_DEVICE} shall expand to no tokens. A program shall
+use \CONST{SHMEMG\_DEVICE} when declaring device-callable functions and shall not
+use environment-specific qualifiers such as \texttt{\_\_device\_\_} directly. The
+synopsis of each routine in \cref{sec:gpu_centric} is written using
+\CONST{SHMEMG\_DEVICE}.
+
+The following non-normative example illustrates a conforming definition of
+\CONST{SHMEMG\_DEVICE}:
+
+\begin{lstlisting}[style=SourceListingsDefault]
+/* shmemg.h -- execution-space annotation for GPU-centric routine declarations. */
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#  define SHMEMG_DEVICE __device__       /* CUDA / HIP */
+#elif defined(SYCL_LANGUAGE_VERSION)
+#  define SHMEMG_DEVICE SYCL_EXTERNAL    /* SYCL: separately-compiled device function */
+#else
+#  define SHMEMG_DEVICE                  /* ISO C / host-only translation unit: no tokens */
+#endif
+\end{lstlisting}
 
 API routines that are introduced in this auxiliary specification
 use the \texttt{shmemg\_} prefix. An \openshmem program should
@@ -1594,6 +1628,14 @@ address and a target \ac{PE} identifier are used to address remote data objects.
 Unless otherwise noted, any \ac{GPU} thread within a device kernel may call these
 routines.
 
+In the synopses that follow, the \CONST{SHMEMG\_DEVICE} annotation
+(\cref{subsec:shmemg_device}) marks each routine as callable from a \ac{GPU}
+device kernel. It expands to the execution-space qualifier required by the
+compilation environment, or to no tokens where none is required. The code
+examples in this specification use CUDA syntax, such as \texttt{\_\_global\_\_}
+kernels and vendor-specific kernel-launch syntax, for concreteness; equivalent
+constructs apply in other \ac{GPU} programming environments.
+
 \subsection{Library Setup and Query}\label{subsec:gc_setup}
 
 \subsubsection{SHMEMG\_MY\_PE}\label{subsec:shmemg_my_pe}
@@ -1602,7 +1644,7 @@ Returns the \ac{PE} number of the calling \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ int shmemg_my_pe(void);
+SHMEMG_DEVICE int shmemg_my_pe(void);
 \end{Csynopsis}
 
 \begin{apiarguments}
@@ -1634,7 +1676,7 @@ Returns the number of \acp{PE} in the \openshmem program.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ int shmemg_n_pes(void);
+SHMEMG_DEVICE int shmemg_n_pes(void);
 \end{Csynopsis}
 
 \begin{apiarguments}
@@ -1842,25 +1884,25 @@ Copies data from a contiguous local data object to a data object on a specified
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_putmem(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_putmem(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_tg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_tg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_putmem_tg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_tg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_htg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_htg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_putmem_htg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_htg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
@@ -1896,25 +1938,25 @@ data object on a specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_putmem_nbi(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_nbi(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_putmem_nbi(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_nbi(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_nbi_tg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_nbi_tg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_putmem_nbi_tg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_nbi_tg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_nbi_htg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_nbi_htg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_putmem_nbi_htg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_nbi_htg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
@@ -1948,8 +1990,8 @@ Copies a single data element to a data object on a specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_TYPENAME_p(TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_p(shmem_ctx_t ctx, TYPE *dest,
+SHMEMG_DEVICE void shmemg_TYPENAME_p(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_p(shmem_ctx_t ctx, TYPE *dest,
     TYPE value, int pe);
 \end{Csynopsis}
 
@@ -1989,25 +2031,25 @@ Copies a contiguous symmetric data object from a specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_getmem(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_getmem(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_getmem(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_getmem(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_getmem_tg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_getmem_tg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_getmem_tg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_getmem_tg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_getmem_htg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_getmem_htg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_getmem_htg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_getmem_htg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
@@ -2041,25 +2083,25 @@ specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_getmem_nbi(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_getmem_nbi(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_getmem_nbi(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_getmem_nbi(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_getmem_nbi_tg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_getmem_nbi_tg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_getmem_nbi_tg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_getmem_nbi_tg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_getmem_nbi_htg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_getmem_nbi_htg(void *dest, const void *source,
     size_t nelems, int pe);
-__device__ void shmemg_ctx_getmem_nbi_htg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_getmem_nbi_htg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, int pe);
 \end{CsynopsisCol}
 
@@ -2094,8 +2136,8 @@ Copies a single data element from a data object on a specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ TYPE shmemg_TYPENAME_g(const TYPE *source, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_g(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_g(const TYPE *source, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_g(shmem_ctx_t ctx,
     const TYPE *source, int pe);
 \end{Csynopsis}
 
@@ -2194,28 +2236,28 @@ Atomically updates a symmetric data object on a specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_TYPENAME_atomic_set(TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_set(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_set(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_set(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_add(TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_add(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_add(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_add(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_inc(TYPE *dest, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_inc(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_inc(TYPE *dest, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_inc(shmem_ctx_t ctx,
     TYPE *dest, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_and(TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_and(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_and(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_and(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_or(TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_or(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_or(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_or(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_xor(TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_xor(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_xor(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_xor(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 \end{Csynopsis}
 
@@ -2273,41 +2315,41 @@ returns the prior value.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ TYPE shmemg_TYPENAME_atomic_fetch(const TYPE *source, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch(const TYPE *source, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch(shmem_ctx_t ctx,
     const TYPE *source, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_swap(TYPE *dest, TYPE value, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_swap(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_swap(TYPE *dest, TYPE value, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_swap(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_compare_swap(TYPE *dest,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_compare_swap(TYPE *dest,
     TYPE cond, TYPE value, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_compare_swap(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_compare_swap(shmem_ctx_t ctx,
     TYPE *dest, TYPE cond, TYPE value, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_fetch_add(TYPE *dest,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_add(TYPE *dest,
     TYPE value, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_add(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_add(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_fetch_inc(TYPE *dest, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_inc(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_inc(TYPE *dest, int pe);
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_inc(shmem_ctx_t ctx,
     TYPE *dest, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_fetch_and(TYPE *dest,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_and(TYPE *dest,
     TYPE value, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_and(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_and(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_fetch_or(TYPE *dest,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_or(TYPE *dest,
     TYPE value, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_or(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_or(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 
-__device__ TYPE shmemg_TYPENAME_atomic_fetch_xor(TYPE *dest,
+SHMEMG_DEVICE TYPE shmemg_TYPENAME_atomic_fetch_xor(TYPE *dest,
     TYPE value, int pe);
-__device__ TYPE shmemg_ctx_TYPENAME_atomic_fetch_xor(shmem_ctx_t ctx,
+SHMEMG_DEVICE TYPE shmemg_ctx_TYPENAME_atomic_fetch_xor(shmem_ctx_t ctx,
     TYPE *dest, TYPE value, int pe);
 \end{Csynopsis}
 
@@ -2372,45 +2414,45 @@ specified \ac{PE}.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_TYPENAME_atomic_fetch_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_nbi(TYPE *fetch,
     const TYPE *source, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_fetch_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_nbi(shmem_ctx_t ctx,
     TYPE *fetch, const TYPE *source, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_swap_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_swap_nbi(TYPE *fetch,
     TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_swap_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_swap_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_compare_swap_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_compare_swap_nbi(TYPE *fetch,
     TYPE *dest, TYPE cond, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_compare_swap_nbi(
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_compare_swap_nbi(
     shmem_ctx_t ctx, TYPE *fetch, TYPE *dest, TYPE cond,
     TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_fetch_add_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_add_nbi(TYPE *fetch,
     TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_fetch_add_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_add_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_fetch_inc_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_inc_nbi(TYPE *fetch,
     TYPE *dest, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_fetch_inc_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_inc_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_fetch_and_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_and_nbi(TYPE *fetch,
     TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_fetch_and_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_and_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_fetch_or_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_or_nbi(TYPE *fetch,
     TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_fetch_or_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_or_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, TYPE value, int pe);
 
-__device__ void shmemg_TYPENAME_atomic_fetch_xor_nbi(TYPE *fetch,
+SHMEMG_DEVICE void shmemg_TYPENAME_atomic_fetch_xor_nbi(TYPE *fetch,
     TYPE *dest, TYPE value, int pe);
-__device__ void shmemg_ctx_TYPENAME_atomic_fetch_xor_nbi(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_TYPENAME_atomic_fetch_xor_nbi(shmem_ctx_t ctx,
     TYPE *fetch, TYPE *dest, TYPE value, int pe);
 \end{Csynopsis}
 
@@ -2509,30 +2551,30 @@ Copies data from a contiguous local data object to a data object on a specified
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_putmem_signal(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_signal(void *dest, const void *source,
     size_t nelems, uint64_t *sig_addr, uint64_t signal,
     int sig_op, int pe);
-__device__ void shmemg_ctx_putmem_signal(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, uint64_t *sig_addr,
     uint64_t signal, int sig_op, int pe);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_signal_tg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_signal_tg(void *dest, const void *source,
     size_t nelems, uint64_t *sig_addr, uint64_t signal,
     int sig_op, int pe);
-__device__ void shmemg_ctx_putmem_signal_tg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_tg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, uint64_t *sig_addr,
     uint64_t signal, int sig_op, int pe);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_signal_htg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_signal_htg(void *dest, const void *source,
     size_t nelems, uint64_t *sig_addr, uint64_t signal,
     int sig_op, int pe);
-__device__ void shmemg_ctx_putmem_signal_htg(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_htg(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, uint64_t *sig_addr,
     uint64_t signal, int sig_op, int pe);
 \end{CsynopsisCol}
@@ -2585,30 +2627,30 @@ signal update.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_putmem_signal_nbi(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_signal_nbi(void *dest, const void *source,
     size_t nelems, uint64_t *sig_addr, uint64_t signal,
     int sig_op, int pe);
-__device__ void shmemg_ctx_putmem_signal_nbi(shmem_ctx_t ctx, void *dest,
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_nbi(shmem_ctx_t ctx, void *dest,
     const void *source, size_t nelems, uint64_t *sig_addr,
     uint64_t signal, int sig_op, int pe);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_signal_nbi_tg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_signal_nbi_tg(void *dest, const void *source,
     size_t nelems, uint64_t *sig_addr, uint64_t signal,
     int sig_op, int pe);
-__device__ void shmemg_ctx_putmem_signal_nbi_tg(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_nbi_tg(shmem_ctx_t ctx,
     void *dest, const void *source, size_t nelems,
     uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_putmem_signal_nbi_htg(void *dest, const void *source,
+SHMEMG_DEVICE void shmemg_putmem_signal_nbi_htg(void *dest, const void *source,
     size_t nelems, uint64_t *sig_addr, uint64_t signal,
     int sig_op, int pe);
-__device__ void shmemg_ctx_putmem_signal_nbi_htg(shmem_ctx_t ctx,
+SHMEMG_DEVICE void shmemg_ctx_putmem_signal_nbi_htg(shmem_ctx_t ctx,
     void *dest, const void *source, size_t nelems,
     uint64_t *sig_addr, uint64_t signal, int sig_op, int pe);
 \end{CsynopsisCol}
@@ -2647,7 +2689,7 @@ Fetches the value of a local signal data object.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ uint64_t shmemg_signal_fetch(const uint64_t *sig_addr);
+SHMEMG_DEVICE uint64_t shmemg_signal_fetch(const uint64_t *sig_addr);
 \end{Csynopsis}
 
 \begin{apiarguments}
@@ -2747,19 +2789,19 @@ Blocks until a symmetric data object on the local \ac{PE} satisfies a condition.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
+SHMEMG_DEVICE void shmemg_TYPENAME_wait_until(TYPE *ivar, int cmp,
     TYPE cmp_value);
 \end{Csynopsis}
 
 Thread group variant:
 \begin{CsynopsisCol}
-__device__ void shmemg_TYPENAME_wait_until_tg(TYPE *ivar, int cmp,
+SHMEMG_DEVICE void shmemg_TYPENAME_wait_until_tg(TYPE *ivar, int cmp,
     TYPE cmp_value);
 \end{CsynopsisCol}
 
 Hardware thread group variant:
 \begin{CsynopsisCol}
-__device__ void shmemg_TYPENAME_wait_until_htg(TYPE *ivar, int cmp,
+SHMEMG_DEVICE void shmemg_TYPENAME_wait_until_htg(TYPE *ivar, int cmp,
     TYPE cmp_value);
 \end{CsynopsisCol}
 
@@ -2798,17 +2840,17 @@ condition.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
+SHMEMG_DEVICE int shmemg_TYPENAME_test(TYPE *ivar, int cmp, TYPE cmp_value);
 \end{Csynopsis}
 
 Thread group variant:
 \begin{CsynopsisCol}
-__device__ int shmemg_TYPENAME_test_tg(TYPE *ivar, int cmp, TYPE cmp_value);
+SHMEMG_DEVICE int shmemg_TYPENAME_test_tg(TYPE *ivar, int cmp, TYPE cmp_value);
 \end{CsynopsisCol}
 
 Hardware thread group variant:
 \begin{CsynopsisCol}
-__device__ int shmemg_TYPENAME_test_htg(TYPE *ivar, int cmp, TYPE cmp_value);
+SHMEMG_DEVICE int shmemg_TYPENAME_test_htg(TYPE *ivar, int cmp, TYPE cmp_value);
 \end{CsynopsisCol}
 
 where \TYPE{} is one of the point-to-point synchronization types defined in
@@ -2840,19 +2882,19 @@ Blocks until a local signal data object satisfies a condition.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ uint64_t shmemg_signal_wait_until(uint64_t *sig_addr,
+SHMEMG_DEVICE uint64_t shmemg_signal_wait_until(uint64_t *sig_addr,
     int cmp, uint64_t cmp_value);
 \end{Csynopsis}
 
 Thread group variant:
 \begin{CsynopsisCol}
-__device__ uint64_t shmemg_signal_wait_until_tg(uint64_t *sig_addr,
+SHMEMG_DEVICE uint64_t shmemg_signal_wait_until_tg(uint64_t *sig_addr,
     int cmp, uint64_t cmp_value);
 \end{CsynopsisCol}
 
 Hardware thread group variant:
 \begin{CsynopsisCol}
-__device__ uint64_t shmemg_signal_wait_until_htg(uint64_t *sig_addr,
+SHMEMG_DEVICE uint64_t shmemg_signal_wait_until_htg(uint64_t *sig_addr,
     int cmp, uint64_t cmp_value);
 \end{CsynopsisCol}
 
@@ -2950,20 +2992,20 @@ operations to symmetric data objects.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_fence(void);
-__device__ void shmemg_ctx_fence(shmem_ctx_t ctx);
+SHMEMG_DEVICE void shmemg_fence(void);
+SHMEMG_DEVICE void shmemg_ctx_fence(shmem_ctx_t ctx);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_fence_tg(void);
-__device__ void shmemg_ctx_fence_tg(shmem_ctx_t ctx);
+SHMEMG_DEVICE void shmemg_fence_tg(void);
+SHMEMG_DEVICE void shmemg_ctx_fence_tg(shmem_ctx_t ctx);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_fence_htg(void);
-__device__ void shmemg_ctx_fence_htg(shmem_ctx_t ctx);
+SHMEMG_DEVICE void shmemg_fence_htg(void);
+SHMEMG_DEVICE void shmemg_ctx_fence_htg(shmem_ctx_t ctx);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
@@ -3009,20 +3051,20 @@ put-with-signal, and nonblocking operations to symmetric data objects.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ void shmemg_quiet(void);
-__device__ void shmemg_ctx_quiet(shmem_ctx_t ctx);
+SHMEMG_DEVICE void shmemg_quiet(void);
+SHMEMG_DEVICE void shmemg_ctx_quiet(shmem_ctx_t ctx);
 \end{Csynopsis}
 
 Thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_quiet_tg(void);
-__device__ void shmemg_ctx_quiet_tg(shmem_ctx_t ctx);
+SHMEMG_DEVICE void shmemg_quiet_tg(void);
+SHMEMG_DEVICE void shmemg_ctx_quiet_tg(shmem_ctx_t ctx);
 \end{CsynopsisCol}
 
 Hardware thread group variants:
 \begin{CsynopsisCol}
-__device__ void shmemg_quiet_htg(void);
-__device__ void shmemg_ctx_quiet_htg(shmem_ctx_t ctx);
+SHMEMG_DEVICE void shmemg_quiet_htg(void);
+SHMEMG_DEVICE void shmemg_ctx_quiet_htg(shmem_ctx_t ctx);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
@@ -3071,17 +3113,17 @@ all \acp{PE} in \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} have arrived.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ int shmemg_sync_all(void);
+SHMEMG_DEVICE int shmemg_sync_all(void);
 \end{Csynopsis}
 
 Thread group variant:
 \begin{CsynopsisCol}
-__device__ int shmemg_sync_all_tg(void);
+SHMEMG_DEVICE int shmemg_sync_all_tg(void);
 \end{CsynopsisCol}
 
 Hardware thread group variant:
 \begin{CsynopsisCol}
-__device__ int shmemg_sync_all_htg(void);
+SHMEMG_DEVICE int shmemg_sync_all_htg(void);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
@@ -3116,17 +3158,17 @@ all \acp{PE} in the specified team have arrived.
 
 \begin{apidefinition}
 \begin{Csynopsis}
-__device__ int shmemg_team_sync(shmem_team_t team);
+SHMEMG_DEVICE int shmemg_team_sync(shmem_team_t team);
 \end{Csynopsis}
 
 Thread group variant:
 \begin{CsynopsisCol}
-__device__ int shmemg_team_sync_tg(shmem_team_t team);
+SHMEMG_DEVICE int shmemg_team_sync_tg(shmem_team_t team);
 \end{CsynopsisCol}
 
 Hardware thread group variant:
 \begin{CsynopsisCol}
-__device__ int shmemg_team_sync_htg(shmem_team_t team);
+SHMEMG_DEVICE int shmemg_team_sync_htg(shmem_team_t team);
 \end{CsynopsisCol}
 
 \begin{apiarguments}
@@ -3491,6 +3533,7 @@ by these implementations.
 \index{SHMEM\_DEVICE\_CTX\_DEFAULT}
 \index{SHMEM\_DEVICE\_TEAM\_WORLD}
 \index{SHMEM\_DEVICE\_TEAM\_SHARED}
+\index{SHMEMG\_DEVICE}
 \index{SHMEM\_CMP\_EQ}
 \index{SHMEM\_CMP\_NE}
 \index{SHMEM\_CMP\_GT}
