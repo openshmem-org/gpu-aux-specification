@@ -7,3 +7,7 @@
 *.out
 *.toc
 *.pdf
+
+# Generated figure PDFs are committed so main_spec.tex includes them directly
+# (regenerate with `make -C figures`). Their sources live in figures/*.tex.
+!figures/*.pdf
