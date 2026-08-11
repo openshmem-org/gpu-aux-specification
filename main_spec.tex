@@ -3519,6 +3519,7 @@ by these implementations.
 \index{shmem\_quiet}
 \index{shmem\_ctx\_quiet}
 \index{shmem\_put\_signal}
+\index{shmem\_ctx\_put\_signal}
 \index{shmem\_barrier\_all}
 \index{shmem\_barrier}
 
@@ -3542,6 +3543,10 @@ by these implementations.
 \index{shmemg\_putmem\_nbi\_htg}
 \index{shmemg\_ctx\_putmem\_nbi\_htg}
 
+% GPU-Centric RMA -- Single-Element Put
+\index{shmemg\_TYPENAME\_p}
+\index{shmemg\_ctx\_TYPENAME\_p}
+
 % GPU-Centric RMA -- Blocking Get
 \index{shmemg\_getmem}
 \index{shmemg\_ctx\_getmem}
@@ -3557,6 +3562,10 @@ by these implementations.
 \index{shmemg\_ctx\_getmem\_nbi\_tg}
 \index{shmemg\_getmem\_nbi\_htg}
 \index{shmemg\_ctx\_getmem\_nbi\_htg}
+
+% GPU-Centric RMA -- Single-Element Get
+\index{shmemg\_TYPENAME\_g}
+\index{shmemg\_ctx\_TYPENAME\_g}
 
 % GPU-Centric AMO -- Non-fetching
 \index{shmemg\_TYPENAME\_atomic\_set}
@@ -3633,14 +3642,20 @@ by these implementations.
 \index{shmemg\_signal\_wait\_until}
 \index{shmemg\_signal\_wait\_until\_tg}
 \index{shmemg\_signal\_wait\_until\_htg}
-\index{shmemg\_wait\_until}
-\index{shmemg\_test}
 
 % GPU-Centric Memory Ordering
 \index{shmemg\_fence}
 \index{shmemg\_ctx\_fence}
+\index{shmemg\_fence\_tg}
+\index{shmemg\_ctx\_fence\_tg}
+\index{shmemg\_fence\_htg}
+\index{shmemg\_ctx\_fence\_htg}
 \index{shmemg\_quiet}
 \index{shmemg\_ctx\_quiet}
+\index{shmemg\_quiet\_tg}
+\index{shmemg\_ctx\_quiet\_tg}
+\index{shmemg\_quiet\_htg}
+\index{shmemg\_ctx\_quiet\_htg}
 
 % GPU-Centric Collective Operations
 \index{shmemg\_sync\_all}
