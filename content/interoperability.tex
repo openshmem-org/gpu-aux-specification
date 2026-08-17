@@ -1,0 +1,24 @@
+
+The extensions defined in this specification introduce a \ac{GPU} symmetric heap
+(\cref{sec:init_memmgmt}) and additional predefined teams
+(\cref{subsec:predefined_device_teams}). These new objects are ordinary
+\openshmem symmetric objects and teams; existing \openshmem 1.6 routines
+interoperate with them as described below, subject to the initialization
+capabilities required in \cref{sec:init_memmgmt}.
+
+Data objects allocated from the \ac{GPU} symmetric heap are \openshmem symmetric
+data objects. Except where this specification states otherwise, they may be
+supplied as operands to \openshmem 1.6 routines that accept symmetric addresses,
+including the query routines \FUNC{shmem\_ptr}, \FUNC{shmem\_team\_ptr},
+\FUNC{shmem\_addr\_accessible}, and \FUNC{shmem\_pe\_accessible}. Such routines
+report the accessibility of \ac{GPU} symmetric heap objects using the same
+semantics defined for the default symmetric heap.
+
+The predefined device teams \CONST{SHMEM\_DEVICE\_TEAM\_WORLD} and
+\CONST{SHMEM\_DEVICE\_TEAM\_SHARED} are teams of type \CTYPE{shmem\_team\_t} and
+may be used wherever an \openshmem 1.6 routine accepts a team handle. This
+includes the team query, management, split, and context-creation routines, such
+as \FUNC{shmem\_team\_my\_pe}, \FUNC{shmem\_team\_n\_pes},
+\FUNC{shmem\_team\_translate\_pe}, the \FUNC{shmem\_team\_split\_*} routines, and
+\FUNC{shmem\_team\_create\_ctx}. These routines operate on the device teams as
+for any team defined by \openshmem 1.6.
