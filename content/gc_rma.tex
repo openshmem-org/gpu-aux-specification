@@ -306,4 +306,11 @@ and completes the transfer with \FUNC{shmemg\_quiet}. Both the source and
 destination operands reside in the \ac{GPU} symmetric heap.
 
 \lstinputlisting[style=SourceListingsDefault]{example_code/gc_rma_example.c}
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program uses \FUNC{shmemg\_ptr} to obtain a directly accessible
+pointer to a symmetric buffer on the right neighbor \ac{PE}. When the neighbor
+is directly accessible, the kernel writes into the remote buffer with an
+ordinary store through the returned pointer; otherwise it falls back to
+\FUNC{shmemg\_putmem}.
 
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_ptr_example.c}

@@ -69,3 +69,64 @@ symmetric buffer in the \ac{GPU} symmetric heap.
 
 \lstinputlisting[style=SourceListingsDefault]{example_code/gc_setup_example.c}
 
+\subsubsection{SHMEMG\_PTR}\label{subsec:shmemg_ptr}
+
+Returns a pointer to a symmetric data object on a specified \ac{PE} that is
+directly accessible from within a \ac{GPU} kernel.
+
+\begin{apidefinition}
+\begin{Csynopsis}
+SHMEMG_DEVICE void *shmemg_ptr(const void *dest, int pe);
+\end{Csynopsis}
+
+\begin{apiarguments}
+\apiargument{IN}{dest}{Symmetric address of the remotely accessible data object
+to be referenced. Shall reside in the \ac{GPU} symmetric heap.}
+\apiargument{IN}{pe}{PE number of the remote PE.}
+\end{apiarguments}
+
+\apidescription{
+Callable from within a \ac{GPU} kernel.
+The \FUNC{shmemg\_ptr} routine returns an address that may be used to directly
+reference the symmetric data object \VAR{dest} on \ac{PE} \VAR{pe} from within a
+\ac{GPU} kernel. This address can be used by the calling \ac{GPU} thread to
+perform ordinary loads and stores to the remote data object, bypassing the
+\ac{RMA} routines. This is the \ac{GPU}-centric analogue of \FUNC{shmem\_ptr}
+in the \openshmem specification.
+
+The routine returns a valid address only when the symmetric data object on the
+remote \ac{PE} \VAR{pe} is directly accessible from the calling \ac{PE}'s
+\ac{GPU}, for example when the remote \ac{PE} resides on the same node and its
+symmetric heap is mapped into the accessing \ac{GPU}'s address space. When the
+remote data object is not directly accessible, the routine returns a null
+pointer.
+
+Accesses performed through a pointer returned by \FUNC{shmemg\_ptr} are not
+ordered or completed by \FUNC{shmemg\_fence} or \FUNC{shmemg\_quiet} with
+respect to \ac{RMA} operations. Ordering and visibility of such direct accesses
+are governed by the memory model of the underlying \ac{GPU} and the memory
+ordering routines described in Section~\ref{subsec:gc_ordering}.
+}
+
+\apireturnvalues{
+A pointer to the symmetric data object \VAR{dest} on \ac{PE} \VAR{pe} when that
+object is directly accessible from the calling \ac{PE}'s \ac{GPU}; otherwise a
+null pointer.
+}
+
+\apinotes{
+\FUNC{shmemg\_ptr} operates at single-thread granularity. No thread group or
+hardware thread group variants are defined. When \VAR{pe} is the calling \ac{PE},
+\FUNC{shmemg\_ptr} returns a pointer to the local symmetric data object.
+}
+\end{apidefinition}
+
+\paragraph*{\textbf{Example}}\mbox{}\par\nobreak
+The following program uses \FUNC{shmemg\_ptr} to obtain a directly accessible
+pointer to a symmetric buffer on the right neighbor \ac{PE}. When the neighbor
+is directly accessible, the kernel writes into the remote buffer with an
+ordinary store through the returned pointer; otherwise it falls back to
+\FUNC{shmemg\_putmem}.
+
+\lstinputlisting[style=SourceListingsDefault]{example_code/gc_ptr_example.c}
+
