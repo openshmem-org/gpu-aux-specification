@@ -20,11 +20,19 @@ predefined team and forms a distinct atomicity domain (see
 \CTYPE{shmem\_team\_t} that corresponds to the set of \acp{PE} that share a
 \ac{GPU} memory domain. \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} refers to the team
 of all \acp{PE} that would mutually return a non-null address from a call to
-\FUNC{shmem\_ptr} or \FUNC{shmem\_team\_ptr} for all \ac{GPU} symmetric heap
-objects. That is, \FUNC{shmem\_ptr} and \FUNC{shmem\_team\_ptr} must return a
-non-null pointer to the local \ac{PE} for all \ac{GPU} symmetric heap objects on
-all target \acp{PE} in the team. This means that \ac{GPU} symmetric heap objects
-on each \ac{PE} are directly load/store accessible by all \acp{PE} in the team.
+\FUNC{shmem\_team\_ptr} for all \ac{GPU} symmetric heap objects. That is,
+\FUNC{shmem\_team\_ptr}, invoked with \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} as the
+team argument, must return a non-null pointer to the local \ac{PE} for all
+\ac{GPU} symmetric heap objects on all target \acp{PE} in the team. This means
+that \ac{GPU} symmetric heap objects on each \ac{PE} are directly load/store
+accessible by all \acp{PE} in the team.
+
+When \ac{GPU}-centric support is initialized (\CONST{SHMEM\_DEVICE\_KERNEL\_INIT}),
+the same membership is observable from within a \ac{GPU} kernel through
+\FUNC{shmemg\_ptr}: a \ac{PE} is a member of \CONST{SHMEM\_DEVICE\_TEAM\_SHARED}
+if and only if \FUNC{shmemg\_ptr} returns a non-null pointer for all \ac{GPU}
+symmetric heap objects on that \ac{PE}. The host-side (\FUNC{shmem\_team\_ptr})
+and device-side (\FUNC{shmemg\_ptr}) queries shall report identical membership.
 
 \CONST{SHMEM\_DEVICE\_TEAM\_SHARED} may or may not correspond to the same set of
 \acp{PE} as \CONST{SHMEM\_TEAM\_SHARED}. The membership of
